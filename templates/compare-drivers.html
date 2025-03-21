@@ -1,0 +1,57 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Compare Drivers</title>
+    <link type="text/css" href="{{ url_for('static', path='/styles.css') }}" rel="stylesheet"/>
+    <script type="module" src="{{ url_for('static', path='/firebase-login.js') }}"></script>
+    <script type="module" src="{{ url_for('static', path='/compare-drivers.js') }}"></script>
+
+</head>
+<body>
+    <div class="navbar">
+        <a href="/main">Home</a>
+        <a href="/add-driver">Add Driver</a>
+        <a href="/add-team">Add Team</a>
+        <a href="/query-drivers">Query D</a>
+        <a href="/query-teams">Query T</a>
+        <a href="compare-drivers">Compare D</a>
+        <a href="compare-teams">Compare T</a>
+        <button id="sign-out" hidden="true">Sign Out</button>
+    </div>
+
+    <div id="login-box" hidden="true">
+        Email:<input type="email" name="" id="email"> <br/>
+        Password:<input type="password" name="" id="password"> <br/>
+        <button id="login">Login</button>
+        <button id="sign-up">Sign Up</button>
+    </div>
+
+    {% if user_token %}
+    <h2>Compare Drivers</h2>
+        <form id="compare-form">
+            <label>Driver 1:
+                <input type="text" id="driver1" name="driver1" required>
+            </label><br>
+            <label>Driver 2:
+                <input type="text" id="driver2" name="driver2" required>
+            </label><br>
+            <button type="submit">Compare</button>
+        </form>
+
+    <h3>Comparison Result:</h3>
+    <table border="1">
+        <thead>
+            <tr>
+                <th>Stat</th>
+                <th>Driver 1</th>
+                <th>Driver 2</th>
+            </tr>
+        </thead>
+        <tbody id="comparison-results"></tbody>
+    </table>
+    {% endif %}
+        
+</body>
+</html>
