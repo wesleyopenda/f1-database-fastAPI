@@ -6,13 +6,16 @@
     <title>Query Drivers</title>
     <link type="text/css" href="{{ url_for('static', path='/styles.css') }}" rel="stylesheet"/>
     <script type="module" src="{{ url_for('static', path='/firebase-login.js') }}"></script>
+    <script type="module" src="{{ url_for('static', path='/query-drivers.js') }}"></script>
+
 </head>
 <body>
     <div class="navbar">
         <a href="/main">Home</a>
         <a href="/add-driver">Add Driver</a>
         <a href="/add-team">Add Team</a>
-        <a href="#">Query</a>
+        <a href="/query-drivers">Query D</a>
+        <a href="/query-teams">Query T</a>
         <a href="#">Compare</a>
         <button id="sign-out" hidden="true">Sign Out</button>
     </div>

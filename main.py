@@ -1,5 +1,5 @@
 from fastapi import FastAPI, Request, Form
-from fastapi.responses import HTMLResponse, RedirectResponse
+from fastapi.responses import HTMLResponse, RedirectResponse, JSONResponse
 from fastapi.staticfiles import StaticFiles
 from fastapi.templating import Jinja2Templates
 import google.oauth2.id_token;
@@ -97,3 +97,31 @@ async def addTeamPost(year_founded: int = Form(...), team_pole_positions: int = 
     }
     firestore_db.collection("teams").add(team_data)
     return RedirectResponse('/add-team', status_code=status.HTTP_302_FOUND)
+
+@app.get("/query-drivers", response_class=HTMLResponse)
+async def queryDrivers(request: Request):
+    id_token = request.cookies.get("token")
+    user_token = validateFirebaseToken(id_token)
+    if not user_token:
+        return RedirectResponse('/')
+    
+    user = getUser(user_token)
+    return templates.TemplateResponse('query-drivers.html', {'request' : request, 'user_token': user_token, 'error_message': None, 'user_info': user.get()})
+
+@app.post("/query-drivers")
+async def queryDriversPost(attribute: str = Form(...), comparison: str = Form(...), value: int = Form(...)):
+    
+    drivers_ref = firestore_db.collection("drivers")
+
+    if comparison == ">":
+        query = drivers_ref.where(attribute, ">", value)
+    elif comparison == "<":
+        query = drivers_ref.where(attribute, "<", value)
+    elif comparison == "==":
+        query = drivers_ref.where(attribute, "==", value)
+    else:
+        return JSONResponse(content={"error": "Invalid comparison operator"}, status_code=400)
+
+    results = [doc.to_dict() for doc in query.stream()]
+    return JSONResponse(content={"drivers": results})
+
