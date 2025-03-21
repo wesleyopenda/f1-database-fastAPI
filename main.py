@@ -1,4 +1,4 @@
-from fastapi import FastAPI, Request, Form
+from fastapi import FastAPI, Request, Form, Query
 from fastapi.responses import HTMLResponse, RedirectResponse, JSONResponse
 from fastapi.staticfiles import StaticFiles
 from fastapi.templating import Jinja2Templates
@@ -125,3 +125,26 @@ async def queryDriversPost(attribute: str = Form(...), comparison: str = Form(..
     results = [doc.to_dict() for doc in query.stream()]
     return JSONResponse(content={"drivers": results})
 
+@app.get("/query-teams", response_class=HTMLResponse)
+async def queryTeams(request: Request):
+    id_token = request.cookies.get("token")
+    user_token = validateFirebaseToken(id_token)
+    if not user_token:
+        return RedirectResponse('/')
+    
+    user = getUser(user_token)
+    return templates.TemplateResponse('query-teams.html', {'request' : request, 'user_token': user_token, 'error_message': None, 'user_info': user.get()})
+
+@app.post("/query-teams")
+async def queryTeamsPost(attribute: str = Form(...), comparison: str = Form(...), value: int = Form(...)):
+    
+    operator_map = {">": ">", "<": "<", "==": "=="}
+    
+    if comparison not in operator_map:
+        return JSONResponse(content={"error": "Invalid comparison operator"}, status_code=400)
+
+    teams_ref = firestore_db.collection("teams")
+    query = teams_ref.where(attribute, operator_map[comparison], value)
+    results = [doc.to_dict() for doc in query.stream()]
+
+    return JSONResponse(content={"teams": results})

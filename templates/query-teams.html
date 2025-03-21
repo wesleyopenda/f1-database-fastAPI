@@ -3,9 +3,11 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Add Driver</title>
+    <title>Query Teams</title>
     <link type="text/css" href="{{ url_for('static', path='/styles.css') }}" rel="stylesheet"/>
     <script type="module" src="{{ url_for('static', path='/firebase-login.js') }}"></script>
+    <script type="module" src="{{ url_for('static', path='/query-drivers.js') }}"></script>
+
 </head>
 <body>
     <div class="navbar">
@@ -14,7 +16,8 @@
         <a href="/add-team">Add Team</a>
         <a href="/query-drivers">Query D</a>
         <a href="/query-teams">Query T</a>
-        <a href="#">Compare</a>
+        <a href="compare-drivers">Compare D</a>
+        <a href="compare-teams">Compare T</a>
         <button id="sign-out" hidden="true">Sign Out</button>
     </div>
 
@@ -26,18 +29,33 @@
     </div>
 
     {% if user_token %}
-    <h2>Add Driver</h2>
-    <form action="/add-driver" method="post">
-        <label>Age: <input type="number" name="age" required></label><br>
-        <label>Total Pole Positions: <input type="number" name="pole_positions" required></label><br>
-        <label>Total Race Wins: <input type="number" name="race_wins" required></label><br>
-        <label>Total Points Scored: <input type="number" name="points_scored" required></label><br>
-        <label>Total World Titles: <input type="number" name="world_titles" required></label><br>
-        <label>Total Fastest Laps: <input type="number" name="fastest_laps" required></label><br>
-        <label>Team: <input type="text" name="team" required></label><br>
-        <button type="submit">Submit</button>
+    <h2>Query Teams</h2>
+    <form id="query-form">
+        <label>Attribute:
+            <select id="attribute" name="attribute">
+                <option value="Year Founded">Year Founded</option>
+                <option value="Total Pole Positions">Total Pole Positions</option>
+                <option value="Total Race Wins">Total Race Wins</option>
+                <option value="Total Constructor Titles">Total Constructor Titles</option>
+                <option value="Finishing Position in Previous Season">Finishing Position in Previous Season</option>
+            </select>
+        </label><br>
+
+        <label>Comparison: 
+            <select id="comparison" name="comparison">
+                <option value=">">Greater Than</option>
+                <option value="<">Less Than</option>
+                <option value="==">Equal To</option>
+            </select>
+        </label><br>
+
+        <label>Value: <input type="number" id="value" name="value" required></label><br>
+        <button type="submit">Search</button>
     </form>
+
+    <h3>Results:</h3>
+    <ul id="results"></ul>
     {% endif %}
-    
+        
 </body>
 </html>
