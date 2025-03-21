@@ -1,0 +1,40 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Add Team</title>
+    <link type="text/css" href="{{ url_for('static', path='/styles.css') }}" rel="stylesheet"/>
+    <script type="module" src="{{ url_for('static', path='/firebase-login.js') }}"></script>
+</head>
+<body>
+    <div class="navbar">
+        <a href="/main">Home</a>
+        <a href="/add-driver">Add Driver</a>
+        <a href="/add-team">Add Team</a>
+        <a href="#">Query</a>
+        <a href="#">Compare</a>
+        <button id="sign-out" hidden="true">Sign Out</button>
+    </div>
+
+    <div id="login-box" hidden="true">
+        Email:<input type="email" name="" id="email"> <br/>
+        Password:<input type="password" name="" id="password"> <br/>
+        <button id="login">Login</button>
+        <button id="sign-up">Sign Up</button>
+    </div>
+
+    {% if user_token %}
+    <h2>Add Team</h2>
+    <form action="/add-team" method="post">
+        <label>Year Founded: <input type="number" name="year_founded" required></label><br>
+        <label>Total Pole Positions: <input type="number" name="team_pole_positions" required></label><br>
+        <label>Total Race Wins: <input type="number" name="team_race_wins" required></label><br>
+        <label>Total Constructor Titles: <input type="number" name="constructor_titles" required></label><br>
+        <label>Finishing Position in Previous Season: <input type="number" name="previous_season" required></label><br>
+        <button type="submit">Submit</button>
+    </form>
+    {% endif %}
+        
+</body>
+</html>

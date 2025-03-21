@@ -1,0 +1,42 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Add Driver</title>
+    <link type="text/css" href="{{ url_for('static', path='/styles.css') }}" rel="stylesheet"/>
+    <script type="module" src="{{ url_for('static', path='/firebase-login.js') }}"></script>
+</head>
+<body>
+    <div class="navbar">
+        <a href="/main">Home</a>
+        <a href="/add-driver">Add Driver</a>
+        <a href="/add-team">Add Team</a>
+        <a href="#">Query</a>
+        <a href="#">Compare</a>
+        <button id="sign-out" hidden="true">Sign Out</button>
+    </div>
+
+    <div id="login-box" hidden="true">
+        Email:<input type="email" name="" id="email"> <br/>
+        Password:<input type="password" name="" id="password"> <br/>
+        <button id="login">Login</button>
+        <button id="sign-up">Sign Up</button>
+    </div>
+
+    {% if user_token %}
+    <h2>Add Driver</h2>
+    <form action="/add-driver" method="post">
+        <label>Age: <input type="number" name="age" required></label><br>
+        <label>Total Pole Positions: <input type="number" name="pole_positions" required></label><br>
+        <label>Total Race Wins: <input type="number" name="race_wins" required></label><br>
+        <label>Total Points Scored: <input type="number" name="points_scored" required></label><br>
+        <label>Total World Titles: <input type="number" name="world_titles" required></label><br>
+        <label>Total Fastest Laps: <input type="number" name="fastest_laps" required></label><br>
+        <label>Team: <input type="text" name="team" required></label><br>
+        <button type="submit">Submit</button>
+    </form>
+    {% endif %}
+        
+</body>
+</html>

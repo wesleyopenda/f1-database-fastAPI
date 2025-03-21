@@ -1,0 +1,30 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Firestore basics</title>
+    <link type="text/css" href="{{ url_for('static', path='/styles.css') }}" rel="stylesheet"/>
+    <script type="module" src="{{ url_for('static', path='/firebase-login.js') }}"></script>
+</head>
+<body>
+    <div id="login-box" hidden="true">
+        Email:<input type="email" name="" id="email"> <br/>
+        Password:<input type="password" name="" id="password"> <br/>
+        <button id="login">Login</button>
+        <button id="sign-up">Sign Up</button>
+    </div>
+    <button id="sign-out" hidden="true">Sign Out</button>
+
+    {% if user_token %}
+        <p>User email: {{ user_token.email }}</p>
+        <form action="/update-user" method="post">
+            Name:<input type="text" id="name" name="name" value="{{ user_info.get('name') }}"/><br/>
+            Age:<input type="number" id="age" name="age" value="{{ user_info.get('age') }}"/><br/>
+            <input type="submit" value="Update"/>
+            <input type="submit" value="Cancel"/>
+        </form>
+    {% endif %}
+        
+</body>
+</html>
