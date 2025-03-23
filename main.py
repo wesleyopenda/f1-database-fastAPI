@@ -66,11 +66,11 @@ async def addDriver(request:Request):
 async def addDriverPost(age: int = Form(...), pole_positions: int = Form(...), race_wins: int = Form(...), points_scored: int = Form(...), world_titles: int = Form(...), fastest_laps: int = Form(...), team: str = Form(...)):
     driver_data = {
         "Age": age,
-        "Total Pole Positions": pole_positions,
-        "Total Race Wins": race_wins,
-        "Total Points Scored": points_scored,
-        "Total World Titles": world_titles,
-        "Total Fastest Laps": fastest_laps,
+        "Total_Pole_Positions": pole_positions,
+        "Total_Race_Wins": race_wins,
+        "Total_Points_Scored": points_scored,
+        "Total_World_Titles": world_titles,
+        "Total_Fastest_Laps": fastest_laps,
         "Team": team
     }
     firestore_db.collection("drivers").add(driver_data)
@@ -87,13 +87,14 @@ async def addTeam(request: Request):
     return templates.TemplateResponse('add-team.html', {'request' : request, 'user_token': user_token, 'error_message': None, 'user_info': user.get()})
 
 @app.post("/add-team")
-async def addTeamPost(year_founded: int = Form(...), team_pole_positions: int = Form(...), team_race_wins: int = Form(...), constructor_titles: int = Form(...), previous_season: int = Form(...)):
+async def addTeamPost(team_name: str = Form(...) ,year_founded: int = Form(...), team_pole_positions: int = Form(...), team_race_wins: int = Form(...), constructor_titles: int = Form(...), previous_season: int = Form(...)):
     team_data = {
-        "Year Founded": year_founded,
-        "Total Pole Positions": team_pole_positions,
-        "Total Race Wins": team_race_wins,
-        "Total Constructor Titles": constructor_titles,
-        "Finishing Position in Previous Season": previous_season
+        "Team_Name": team_name,
+        "Year-Founded": year_founded,
+        "Total_Pole_Positions": team_pole_positions,
+        "Total_Race_Wins": team_race_wins,
+        "Total_Constructor_Titles": constructor_titles,
+        "Finishing_Position_in_Previous_Season": previous_season
     }
     firestore_db.collection("teams").add(team_data)
     return RedirectResponse('/add-team', status_code=status.HTTP_302_FOUND)
@@ -135,18 +136,22 @@ async def queryTeams(request: Request):
     user = getUser(user_token)
     return templates.TemplateResponse('query-teams.html', {'request' : request, 'user_token': user_token, 'error_message': None, 'user_info': user.get()})
 
+
 @app.post("/query-teams")
 async def queryTeamsPost(attribute: str = Form(...), comparison: str = Form(...), value: int = Form(...)):
-    
-    operator_map = {">": ">", "<": "<", "==": "=="}
-    
-    if comparison not in operator_map:
-        return JSONResponse(content={"error": "Invalid comparison operator"}, status_code=400)
 
     teams_ref = firestore_db.collection("teams")
-    query = teams_ref.where(attribute, operator_map[comparison], value)
-    results = [doc.to_dict() for doc in query.stream()]
 
+    if comparison == ">":
+        query = teams_ref.where(attribute, ">", value)
+    elif comparison == "<":
+        query = teams_ref.where(attribute, "<", value)
+    elif comparison == "==":
+        query = teams_ref.where(attribute, "==", value)
+    else:
+        return JSONResponse(content={"error": "Invalid comparison operator"}, status_code=400)
+
+    results = [doc.to_dict() for doc in query.stream()]
     return JSONResponse(content={"teams": results})
 
 @app.get("/compare-drivers", response_class=HTMLResponse)

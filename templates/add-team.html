@@ -29,6 +29,7 @@
     {% if user_token %}
     <h2>Add Team</h2>
     <form action="/add-team" method="post">
+        <label>Team Name <input type="text" name="team_name" required></label><br>
         <label>Year Founded: <input type="number" name="year_founded" required></label><br>
         <label>Total Pole Positions: <input type="number" name="team_pole_positions" required></label><br>
         <label>Total Race Wins: <input type="number" name="team_race_wins" required></label><br>

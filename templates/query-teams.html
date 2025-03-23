@@ -6,7 +6,7 @@
     <title>Query Teams</title>
     <link type="text/css" href="{{ url_for('static', path='/styles.css') }}" rel="stylesheet"/>
     <script type="module" src="{{ url_for('static', path='/firebase-login.js') }}"></script>
-    <script type="module" src="{{ url_for('static', path='/query-drivers.js') }}"></script>
+    <script type="module" src="{{ url_for('static', path='/query-teams.js') }}"></script>
 
 </head>
 <body>
@@ -33,11 +33,11 @@
     <form id="query-form">
         <label>Attribute:
             <select id="attribute" name="attribute">
-                <option value="Year Founded">Year Founded</option>
-                <option value="Total Pole Positions">Total Pole Positions</option>
-                <option value="Total Race Wins">Total Race Wins</option>
-                <option value="Total Constructor Titles">Total Constructor Titles</option>
-                <option value="Finishing Position in Previous Season">Finishing Position in Previous Season</option>
+                <option value="Year_Founded">Year Founded</option>
+                <option value="Total_Pole_Positions">Total Pole Positions</option>
+                <option value="Total_Race_Wins">Total Race Wins</option>
+                <option value="Total_Constructor_Titles">Total Constructor Titles</option>
+                <option value="Finishing_Position_in_Previous_Season">Finishing Position in Previous Season</option>
             </select>
         </label><br>
 
