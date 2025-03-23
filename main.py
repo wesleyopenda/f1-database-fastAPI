@@ -154,6 +154,7 @@ async def queryTeamsPost(attribute: str = Form(...), comparison: str = Form(...)
     results = [doc.to_dict() for doc in query.stream()]
     return JSONResponse(content={"teams": results})
 
+
 @app.get("/compare-drivers", response_class=HTMLResponse)
 async def compareDrivers(request: Request):
     id_token = request.cookies.get("token")
@@ -161,9 +162,21 @@ async def compareDrivers(request: Request):
     if not user_token:
         return RedirectResponse('/')
     
+    drivers_ref = firestore_db.collection("drivers")
+    drivers = [doc.to_dict() for doc in drivers_ref.stream()]
+    
     user = getUser(user_token)
-    return templates.TemplateResponse('compare-drivers.html', {'request' : request, 'user_token': user_token, 'error_message': None, 'user_info': user.get()})
+    return templates.TemplateResponse('compare-drivers.html', {'request': request, 'user_token': user_token, 'user_info': user.get(), 'drivers': drivers})
 
+@app.get("/get-drivers")
+async def getDrivers():
+    try:
+        drivers_ref = firestore_db.collection("drivers")
+        drivers = [doc.to_dict() for doc in drivers_ref.stream()]
+        return JSONResponse(content={"drivers": drivers})
+    except Exception as e:
+        return JSONResponse(content={"error": str(e)}, status_code=500)
+    
 @app.post("/compare-drivers")
 async def compareDriversPost(driver1: str = Form(...), driver2: str = Form(...)):
     driver1_doc = firestore_db.collection("drivers").where("name", "==", driver1).get()

@@ -1,9 +1,33 @@
 document.addEventListener("DOMContentLoaded", function () {
+    loadDrivers();
+    
     document.getElementById("compare-form").addEventListener("submit", function (event) {
         event.preventDefault();
         compareDrivers();
     });
 });
+
+function loadDrivers() {
+    fetch("/get-drivers")
+        .then(response => response.json())
+        .then(data => {
+            let driver1Dropdown = document.getElementById("driver1");
+            let driver2Dropdown = document.getElementById("driver2");
+
+            data.drivers.forEach(driver => {
+                let option1 = document.createElement("option");
+                option1.value = driver.name;
+                option1.textContent = driver.name;
+                driver1Dropdown.appendChild(option1);
+
+                let option2 = document.createElement("option");
+                option2.value = driver.name;
+                option2.textContent = driver.name;
+                driver2Dropdown.appendChild(option2);
+            });
+        })
+        .catch(error => console.error("Error fetching drivers:", error));
+}
 
 function compareDrivers() {
     let driver1 = document.getElementById("driver1").value;

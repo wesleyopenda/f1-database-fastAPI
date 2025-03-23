@@ -30,15 +30,21 @@
 
     {% if user_token %}
     <h2>Compare Drivers</h2>
-        <form id="compare-form">
-            <label>Driver 1:
-                <input type="text" id="driver1" name="driver1" required>
-            </label><br>
-            <label>Driver 2:
-                <input type="text" id="driver2" name="driver2" required>
-            </label><br>
-            <button type="submit">Compare</button>
-        </form>
+    <form id="compare-form">
+        <label>Driver 1:
+            <select id="driver1" name="driver1" required>
+                <option value="">Select a driver</option>
+            </select>
+        </label><br>
+    
+        <label>Driver 2:
+            <select id="driver2" name="driver2" required>
+                <option value="">Select a driver</option>
+            </select>
+        </label><br>
+    
+        <button type="submit">Compare</button>
+    </form>
 
     <h3>Comparison Result:</h3>
     <table border="1">
