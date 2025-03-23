@@ -148,3 +148,65 @@ async def queryTeamsPost(attribute: str = Form(...), comparison: str = Form(...)
     results = [doc.to_dict() for doc in query.stream()]
 
     return JSONResponse(content={"teams": results})
+
+@app.get("/compare-drivers", response_class=HTMLResponse)
+async def compareDrivers(request: Request):
+    id_token = request.cookies.get("token")
+    user_token = validateFirebaseToken(id_token)
+    if not user_token:
+        return RedirectResponse('/')
+    
+    user = getUser(user_token)
+    return templates.TemplateResponse('compare-drivers.html', {'request' : request, 'user_token': user_token, 'error_message': None, 'user_info': user.get()})
+
+@app.post("/compare-drivers")
+async def compareDriversPost(driver1: str = Form(...), driver2: str = Form(...)):
+    driver1_doc = firestore_db.collection("drivers").where("name", "==", driver1).get()
+    driver2_doc = firestore_db.collection("drivers").where("name", "==", driver2).get()
+
+    if not driver1_doc or not driver2_doc:
+        return JSONResponse(content={"error": "One or both drivers not found"}, status_code=400)
+
+    driver1_data = driver1_doc[0].to_dict()
+    driver2_data = driver2_doc[0].to_dict()
+
+    comparison = {}
+    for stat in driver1_data.keys():
+        if isinstance(driver1_data[stat], int):
+            better = "driver1" if driver1_data[stat] > driver2_data[stat] else "driver2"
+            if stat == "Age":
+                better = "driver1" if driver1_data[stat] < driver2_data[stat] else "driver2"
+            comparison[stat] = {"driver1": driver1_data[stat], "driver2": driver2_data[stat], "better": better}
+
+    return JSONResponse(content={"comparison": comparison})
+
+@app.get("/compare-teams", response_class=HTMLResponse)
+async def compareTeams(request: Request):
+    id_token = request.cookies.get("token")
+    user_token = validateFirebaseToken(id_token)
+    if not user_token:
+        return RedirectResponse('/')
+    
+    user = getUser(user_token)
+    return templates.TemplateResponse('compare-teams.html', {'request' : request, 'user_token': user_token, 'error_message': None, 'user_info': user.get()})
+
+@app.post("/compare-teams")
+async def compareTeamsPost(team1: str = Form(...), team2: str = Form(...)):
+    team1_doc = firestore_db.collection("teams").where("name", "==", team1).get()
+    team2_doc = firestore_db.collection("teams").where("name", "==", team2).get()
+
+    if not team1_doc or not team2_doc:
+        return JSONResponse(content={"error": "One or both teams not found"}, status_code=400)
+
+    team1_data = team1_doc[0].to_dict()
+    team2_data = team2_doc[0].to_dict()
+
+    comparison = {}
+    for stat in team1_data.keys():
+        if isinstance(team1_data[stat], int):
+            better = "team1" if team1_data[stat] > team2_data[stat] else "team2"
+            if stat in ["Finishing Position in Previous Season", "Year Founded"]:
+                better = "team1" if team1_data[stat] < team2_data[stat] else "team2"
+            comparison[stat] = {"team1": team1_data[stat], "team2": team2_data[stat], "better": better}
+
+    return JSONResponse(content={"comparison": comparison})
