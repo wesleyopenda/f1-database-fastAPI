@@ -54,3 +54,107 @@ async def home(request: Request):
 if __name__ == "__main__":
     import uvicorn
     uvicorn.run("main:app", host="0.0.0.0", port=8080, reload=True)
+
+@app.get("/drivers", response_class=HTMLResponse)
+async def list_drivers(request: Request):
+    drivers_ref = firestore_db.collection("drivers")
+    drivers = [doc.to_dict() | {"id": doc.id} for doc in drivers_ref.stream()]
+    return templates.TemplateResponse("drivers_list.html", {"request": request, "drivers": drivers})
+
+@app.get("/drivers/add", response_class=HTMLResponse)
+async def add_driver_form(request: Request):
+    return templates.TemplateResponse("add_driver.html", {"request": request})
+
+@app.post("/drivers/add", response_class=RedirectResponse)
+async def add_driver(
+    request: Request,
+    name: str = Form(...),
+    age: int = Form(...),
+    total_pole_positions: int = Form(...),
+    total_race_wins: int = Form(...),
+    total_points_scored: int = Form(...),
+    total_world_titles: int = Form(...),
+    total_fastest_laps: int = Form(...),
+    team: str = Form(...),
+    image: UploadFile = File(None)
+):
+    driver_data = {
+        "name": name,
+        "age": age,
+        "total_pole_positions": total_pole_positions,
+        "total_race_wins": total_race_wins,
+        "total_points_scored": total_points_scored,
+        "total_world_titles": total_world_titles,
+        "total_fastest_laps": total_fastest_laps,
+        "team": team,
+        "image_url": None,
+    }
+    # Handle optional image upload
+    if image is not None and image.filename != "":
+        storage_client = storage.Client(project=local_constants.PROJECT_NAME)
+        bucket = storage_client.bucket(local_constants.PROJECT_STORAGE_BUCKET)
+        # Use a path that organizes driver images
+        blob = bucket.blob(f"drivers/{image.filename}")
+        blob.upload_from_file(image.file, content_type=image.content_type)
+        driver_data["image_url"] = blob.public_url
+
+    firestore_db.collection("drivers").add(driver_data)
+    return RedirectResponse(url="/drivers", status_code=status.HTTP_302_FOUND)
+
+@app.get("/drivers/{driver_id}", response_class=HTMLResponse)
+async def driver_details(request: Request, driver_id: str):
+    doc = firestore_db.collection("drivers").document(driver_id).get()
+    if not doc.exists:
+        return HTMLResponse("Driver not found", status_code=404)
+    driver = doc.to_dict()
+    driver["id"] = driver_id
+    return templates.TemplateResponse("driver_details.html", {"request": request, "driver": driver})
+
+@app.get("/drivers/edit/{driver_id}", response_class=HTMLResponse)
+async def edit_driver_form(request: Request, driver_id: str):
+    doc = firestore_db.collection("drivers").document(driver_id).get()
+    if not doc.exists:
+        return HTMLResponse("Driver not found", status_code=404)
+    driver = doc.to_dict()
+    driver["id"] = driver_id
+    return templates.TemplateResponse("edit_driver.html", {"request": request, "driver": driver})
+
+@app.post("/drivers/edit/{driver_id}", response_class=RedirectResponse)
+async def edit_driver(
+    request: Request,
+    driver_id: str,
+    name: str = Form(...),
+    age: int = Form(...),
+    total_pole_positions: int = Form(...),
+    total_race_wins: int = Form(...),
+    total_points_scored: int = Form(...),
+    total_world_titles: int = Form(...),
+    total_fastest_laps: int = Form(...),
+    team: str = Form(...),
+    image: UploadFile = File(None)
+):
+    driver_data = {
+        "name": name,
+        "age": age,
+        "total_pole_positions": total_pole_positions,
+        "total_race_wins": total_race_wins,
+        "total_points_scored": total_points_scored,
+        "total_world_titles": total_world_titles,
+        "total_fastest_laps": total_fastest_laps,
+        "team": team,
+    }
+    if image is not None and image.filename != "":
+        storage_client = storage.Client(project=local_constants.PROJECT_NAME)
+        bucket = storage_client.bucket(local_constants.PROJECT_STORAGE_BUCKET)
+        blob = bucket.blob(f"drivers/{image.filename}")
+        blob.upload_from_file(image.file, content_type=image.content_type)
+        driver_data["image_url"] = blob.public_url
+
+    firestore_db.collection("drivers").document(driver_id).update(driver_data)
+    return RedirectResponse(url=f"/drivers/{driver_id}", status_code=status.HTTP_302_FOUND)
+
+@app.post("/drivers/delete/{driver_id}", response_class=RedirectResponse)
+async def delete_driver(driver_id: str):
+    firestore_db.collection("drivers").document(driver_id).delete()
+    return RedirectResponse(url="/drivers", status_code=status.HTTP_302_FOUND)
+
