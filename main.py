@@ -270,3 +270,119 @@ async def delete_team(team_id: str):
     firestore_db.collection("teams").document(team_id).delete()
     return RedirectResponse(url="/teams", status_code=status.HTTP_302_FOUND)
 
+# -------------------------
+# Comparison Endpoints
+# -------------------------
+
+# Driver Comparison
+
+@app.get("/compare/drivers", response_class=HTMLResponse)
+async def compare_drivers_form(request: Request):
+    # Get list of drivers for dropdowns
+    drivers_ref = firestore_db.collection("drivers")
+    drivers = [doc.to_dict() | {"id": doc.id} for doc in drivers_ref.stream()]
+    return templates.TemplateResponse("compare_drivers_form.html", {"request": request, "drivers": drivers})
+
+@app.post("/compare/drivers", response_class=HTMLResponse)
+async def compare_drivers(
+    request: Request,
+    driver1_id: str = Form(...),
+    driver2_id: str = Form(...)
+):
+    # Retrieve driver documents
+    doc1 = firestore_db.collection("drivers").document(driver1_id).get()
+    doc2 = firestore_db.collection("drivers").document(driver2_id).get()
+    if not doc1.exists or not doc2.exists:
+        return HTMLResponse("One or both drivers not found", status_code=404)
+    driver1 = doc1.to_dict()
+    driver2 = doc2.to_dict()
+
+    # Compare key statistics:
+    # For age, lower is better; for all others, higher is better.
+    stats = ["age", "total_pole_positions", "total_race_wins", "total_points_scored", "total_world_titles", "total_fastest_laps"]
+    comparison = []
+    for stat in stats:
+        value1 = driver1.get(stat, 0)
+        value2 = driver2.get(stat, 0)
+        if stat == "age":
+            if value1 < value2:
+                better = "driver1"
+            elif value2 < value1:
+                better = "driver2"
+            else:
+                better = "equal"
+        else:
+            if value1 > value2:
+                better = "driver1"
+            elif value2 > value1:
+                better = "driver2"
+            else:
+                better = "equal"
+        comparison.append({
+            "stat": stat,
+            "driver1_value": value1,
+            "driver2_value": value2,
+            "better": better
+        })
+    return templates.TemplateResponse("compare_drivers.html", {
+        "request": request,
+        "driver1": driver1,
+        "driver2": driver2,
+        "comparison": comparison
+    })
+
+# Team Comparison
+
+@app.get("/compare/teams", response_class=HTMLResponse)
+async def compare_teams_form(request: Request):
+    teams_ref = firestore_db.collection("teams")
+    teams = [doc.to_dict() | {"id": doc.id} for doc in teams_ref.stream()]
+    return templates.TemplateResponse("compare_teams_form.html", {"request": request, "teams": teams})
+
+@app.post("/compare/teams", response_class=HTMLResponse)
+async def compare_teams(
+    request: Request,
+    team1_id: str = Form(...),
+    team2_id: str = Form(...)
+):
+    doc1 = firestore_db.collection("teams").document(team1_id).get()
+    doc2 = firestore_db.collection("teams").document(team2_id).get()
+    if not doc1.exists or not doc2.exists:
+        return HTMLResponse("One or both teams not found", status_code=404)
+    team1 = doc1.to_dict()
+    team2 = doc2.to_dict()
+
+    # For teams, assume these fields:
+    # year_founded and finishing_position_previous_season: lower is better;
+    # total_pole_positions, total_race_wins, total_constructor_titles: higher is better.
+    stats = ["year_founded", "total_pole_positions", "total_race_wins", "total_constructor_titles", "finishing_position_previous_season"]
+    comparison = []
+    for stat in stats:
+        value1 = team1.get(stat, 0)
+        value2 = team2.get(stat, 0)
+        if stat in ["year_founded", "finishing_position_previous_season"]:
+            if value1 < value2:
+                better = "team1"
+            elif value2 < value1:
+                better = "team2"
+            else:
+                better = "equal"
+        else:
+            if value1 > value2:
+                better = "team1"
+            elif value2 > value1:
+                better = "team2"
+            else:
+                better = "equal"
+        comparison.append({
+            "stat": stat,
+            "team1_value": value1,
+            "team2_value": value2,
+            "better": better
+        })
+    return templates.TemplateResponse("compare_teams.html", {
+        "request": request,
+        "team1": team1,
+        "team2": team2,
+        "comparison": comparison
+    })
