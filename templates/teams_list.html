@@ -1,0 +1,33 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Teams List</title>
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+</head>
+<body>
+  <div class="container mt-4">
+    <h1>Teams</h1>
+    <a class="btn btn-success mb-3" href="/teams/add">Add New Team</a>
+    <div class="row">
+      {% for team in teams %}
+        <div class="col-md-4 mb-3">
+          <div class="card">
+            {% if team.logo_url %}
+              <img src="{{ team.logo_url }}" class="card-img-top" alt="{{ team.name }}">
+            {% else %}
+              <img src="https://via.placeholder.com/300x200.png?text=No+Logo" class="card-img-top" alt="No Logo">
+            {% endif %}
+            <div class="card-body">
+              <h5 class="card-title">{{ team.name }}</h5>
+              <a href="/teams/{{ team.id }}" class="btn btn-primary">View Details</a>
+            </div>
+          </div>
+        </div>
+      {% endfor %}
+    </div>
+  </div>
+  <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+</body>
+</html>

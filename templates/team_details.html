@@ -1,0 +1,56 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Team Details</title>
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+</head>
+<body>
+  <div class="container mt-4">
+    <h1>Team Details</h1>
+    <div class="card">
+      {% if team.logo_url %}
+        <img src="{{ team.logo_url }}" class="card-img-top" alt="{{ team.name }}">
+      {% else %}
+        <img src="https://via.placeholder.com/300x200.png?text=No+Logo" class="card-img-top" alt="No Logo">
+      {% endif %}
+      <div class="card-body">
+        <h5 class="card-title">{{ team.name }}</h5>
+        <p class="card-text">
+          Year Founded: {{ team.year_founded }}<br>
+          Total Pole Positions: {{ team.total_pole_positions }}<br>
+          Total Race Wins: {{ team.total_race_wins }}<br>
+          Total Constructor Titles: {{ team.total_constructor_titles }}<br>
+          Finishing Position in Previous Season: {{ team.finishing_position_previous_season }}
+        </p>
+        <a href="/teams/edit/{{ team.id }}" class="btn btn-warning">Edit</a>
+        <form action="/teams/delete/{{ team.id }}" method="post" style="display: inline;">
+          <button type="submit" class="btn btn-danger" onclick="return confirm('Are you sure you want to delete this team?');">Delete</button>
+        </form>
+        <a href="/teams" class="btn btn-secondary">Back to List</a>
+      </div>
+    </div>
+
+    <h2 class="mt-4">Drivers in this Team</h2>
+    <div class="row">
+      {% for driver in drivers %}
+        <div class="col-md-4 mb-3">
+          <div class="card">
+            {% if driver.image_url %}
+              <img src="{{ driver.image_url }}" class="card-img-top" alt="{{ driver.name }}">
+            {% else %}
+              <img src="https://via.placeholder.com/300x200.png?text=No+Image" class="card-img-top" alt="No Image">
+            {% endif %}
+            <div class="card-body">
+              <h5 class="card-title">{{ driver.name }}</h5>
+              <a href="/drivers/{{ driver.id }}" class="btn btn-primary">View Driver</a>
+            </div>
+          </div>
+        </div>
+      {% endfor %}
+    </div>
+  </div>
+  <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+</body>
+</html>

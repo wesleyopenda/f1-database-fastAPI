@@ -55,6 +55,10 @@ if __name__ == "__main__":
     import uvicorn
     uvicorn.run("main:app", host="0.0.0.0", port=8080, reload=True)
 
+# -------------------------
+# Driver Endpoints
+# -------------------------
+
 @app.get("/drivers", response_class=HTMLResponse)
 async def list_drivers(request: Request):
     drivers_ref = firestore_db.collection("drivers")
@@ -157,4 +161,112 @@ async def edit_driver(
 async def delete_driver(driver_id: str):
     firestore_db.collection("drivers").document(driver_id).delete()
     return RedirectResponse(url="/drivers", status_code=status.HTTP_302_FOUND)
+
+# -------------------------
+# Team Endpoints
+# -------------------------
+
+@app.get("/teams", response_class=HTMLResponse)
+async def list_teams(request: Request):
+    # Query all teams from the "teams" collection
+    teams_ref = firestore_db.collection("teams")
+    teams = [doc.to_dict() | {"id": doc.id} for doc in teams_ref.stream()]
+    return templates.TemplateResponse("teams_list.html", {"request": request, "teams": teams})
+
+@app.get("/teams/add", response_class=HTMLResponse)
+async def add_team_form(request: Request):
+    return templates.TemplateResponse("add_team.html", {"request": request})
+
+@app.post("/teams/add", response_class=RedirectResponse)
+async def add_team(
+    request: Request,
+    name: str = Form(...),
+    year_founded: int = Form(...),
+    total_pole_positions: int = Form(...),
+    total_race_wins: int = Form(...),
+    total_constructor_titles: int = Form(...),
+    finishing_position_previous_season: int = Form(...),
+    logo: UploadFile = File(None)
+):
+    team_data = {
+        "name": name,
+        "year_founded": year_founded,
+        "total_pole_positions": total_pole_positions,
+        "total_race_wins": total_race_wins,
+        "total_constructor_titles": total_constructor_titles,
+        "finishing_position_previous_season": finishing_position_previous_season,
+        "logo_url": None,
+    }
+    # Handle optional logo upload
+    if logo is not None and logo.filename != "":
+        storage_client = storage.Client(project=local_constants.PROJECT_NAME)
+        bucket = storage_client.bucket(local_constants.PROJECT_STORAGE_BUCKET)
+        blob = bucket.blob(f"teams/{logo.filename}")
+        blob.upload_from_file(logo.file, content_type=logo.content_type)
+        team_data["logo_url"] = blob.public_url
+
+    firestore_db.collection("teams").add(team_data)
+    return RedirectResponse(url="/teams", status_code=status.HTTP_302_FOUND)
+
+@app.get("/teams/{team_id}", response_class=HTMLResponse)
+async def team_details(request: Request, team_id: str):
+    doc = firestore_db.collection("teams").document(team_id).get()
+    if not doc.exists:
+        return HTMLResponse("Team not found", status_code=404)
+    team = doc.to_dict()
+    team["id"] = team_id
+
+    # Query drivers associated with this team. We assume driver documents have a "team" field.
+    drivers_ref = firestore_db.collection("drivers").where("team", "==", team["name"])
+    drivers = [doc.to_dict() | {"id": doc.id} for doc in drivers_ref.stream()]
+
+    return templates.TemplateResponse("team_details.html", {
+        "request": request,
+        "team": team,
+        "drivers": drivers  # List of drivers for this team
+    })
+
+@app.get("/teams/edit/{team_id}", response_class=HTMLResponse)
+async def edit_team_form(request: Request, team_id: str):
+    doc = firestore_db.collection("teams").document(team_id).get()
+    if not doc.exists:
+        return HTMLResponse("Team not found", status_code=404)
+    team = doc.to_dict()
+    team["id"] = team_id
+    return templates.TemplateResponse("edit_team.html", {"request": request, "team": team})
+
+@app.post("/teams/edit/{team_id}", response_class=RedirectResponse)
+async def edit_team(
+    request: Request,
+    team_id: str,
+    name: str = Form(...),
+    year_founded: int = Form(...),
+    total_pole_positions: int = Form(...),
+    total_race_wins: int = Form(...),
+    total_constructor_titles: int = Form(...),
+    finishing_position_previous_season: int = Form(...),
+    logo: UploadFile = File(None)
+):
+    team_data = {
+        "name": name,
+        "year_founded": year_founded,
+        "total_pole_positions": total_pole_positions,
+        "total_race_wins": total_race_wins,
+        "total_constructor_titles": total_constructor_titles,
+        "finishing_position_previous_season": finishing_position_previous_season,
+    }
+    if logo is not None and logo.filename != "":
+        storage_client = storage.Client(project=local_constants.PROJECT_NAME)
+        bucket = storage_client.bucket(local_constants.PROJECT_STORAGE_BUCKET)
+        blob = bucket.blob(f"teams/{logo.filename}")
+        blob.upload_from_file(logo.file, content_type=logo.content_type)
+        team_data["logo_url"] = blob.public_url
+
+    firestore_db.collection("teams").document(team_id).update(team_data)
+    return RedirectResponse(url=f"/teams/{team_id}", status_code=status.HTTP_302_FOUND)
+
+@app.post("/teams/delete/{team_id}", response_class=RedirectResponse)
+async def delete_team(team_id: str):
+    firestore_db.collection("teams").document(team_id).delete()
+    return RedirectResponse(url="/teams", status_code=status.HTTP_302_FOUND)
 
