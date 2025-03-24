@@ -3,38 +3,12 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Home</title>
-    <link type="text/css" href="{{ url_for('static', path='/styles.css') }}" rel="stylesheet"/>
-    <script type="module" src="{{ url_for('static', path='/firebase-login.js') }}"></script>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <title>Document</title>
 </head>
 <body>
-    <div class="navbar">
-        <a href="/main">Home</a>
-        <a href="/add-driver">Add Driver</a>
-        <a href="/add-team">Add Team</a>
-        <a href="/query-drivers">Query D</a>
-        <a href="/query-teams">Query T</a>
-        <a href="compare-drivers">Compare D</a>
-        <a href="compare-teams">Compare T</a>
-        <button id="sign-out" hidden="true">Sign Out</button>
-    </div>
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
 
-    <div id="login-box" hidden="true">
-        Email:<input type="email" name="" id="email"> <br/>
-        Password:<input type="password" name="" id="password"> <br/>
-        <button id="login">Login</button>
-        <button id="sign-up">Sign Up</button>
-    </div>
-
-    {% if user_token %}
-        <p>Welcome to the Home page of the F1 site</p>
-        <p>User email: {{ user_token.email }}</p>
-        <p>error message: {{ error_message }}</p>
-        <p>name: {{ user_info.get('name') }}</p>
-        <p>age: {{ user_info.get('age') }}</p>
-        
-        <a href="/add-driver">Add driver here</a>
-    {% endif %}
-        
+    
 </body>
 </html>
