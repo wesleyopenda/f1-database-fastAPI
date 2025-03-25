@@ -48,22 +48,27 @@ async def home(request: Request):
     if user_token:
         user_doc = get_user(user_token)
         user_info = user_doc.get().to_dict()
-    
-    # Query pre-installed drivers from Firestore
+
+    # Query pre-installed drivers from Firestore without using union operator
     drivers_ref = firestore_db.collection("drivers")
-    drivers = [doc.to_dict() | {"id": doc.id} for doc in drivers_ref.stream()]
-    
+    drivers = []
+    for doc in drivers_ref.stream():
+        d = doc.to_dict()
+        d["id"] = doc.id
+        drivers.append(d)
+
     # Query pre-installed teams from Firestore
     teams_ref = firestore_db.collection("teams")
-    teams = [doc.to_dict() | {"id": doc.id} for doc in teams_ref.stream()]
+    teams = []
+    for doc in teams_ref.stream():
+        t = doc.to_dict()
+        t["id"] = doc.id
+        teams.append(t)
 
     print(f"DEBUG: Found {len(drivers)} drivers and {len(teams)} teams")
 
     return templates.TemplateResponse("main.html", {"request": request,"user_token": user_token,"error_message": error_message,"user_info": user_info,"drivers": drivers,"teams": teams})
 
-if __name__ == "__main__":
-    import uvicorn
-    uvicorn.run("main:app", host="0.0.0.0", port=8080, reload=True)
 
 # -------------------------
 # Authentication Endpoints
@@ -92,8 +97,56 @@ async def logout(request: Request):
 @app.get("/drivers", response_class=HTMLResponse)
 async def list_drivers(request: Request):
     drivers_ref = firestore_db.collection("drivers")
-    drivers = [doc.to_dict() | {"id": doc.id} for doc in drivers_ref.stream()]
+    drivers = []
+    for doc in drivers_ref.stream():
+        d = doc.to_dict()
+        d["id"] = doc.id
+        drivers.append(d)
+    print("DEBUG: Found {} drivers".format(len(drivers)))
     return templates.TemplateResponse("drivers_list.html", {"request": request, "drivers": drivers})
+
+
+# -------------------------
+# Driver Query Endpoints
+# -------------------------
+
+@app.get("/drivers/query", response_class=HTMLResponse)
+async def query_drivers_form(request: Request):
+    print("DEBUG: /drivers/query GET endpoint accessed")
+    # Render a form for filtering drivers.
+    return templates.TemplateResponse("query_drivers.html", {"request": request})
+
+@app.post("/drivers/query", response_class=HTMLResponse)
+async def query_drivers(
+    request: Request,
+    attribute: str = Form(...),
+    operator: str = Form(...),
+    value: str = Form(...)
+):
+    print("DEBUG: /drivers/query POST endpoint accessed")
+    drivers_ref = firestore_db.collection("drivers")
+    # If the attribute is numeric, convert the value to int.
+    if attribute in ["age", "total_pole_positions", "total_race_wins", "total_points_scored", "total_world_titles", "total_fastest_laps"]:
+        try:
+            value = int(value)
+        except ValueError:
+            return HTMLResponse("Invalid numeric value provided.", status_code=400)
+    query = drivers_ref.where(attribute, operator, value)
+    drivers = []
+    for doc in query.stream():
+        d = doc.to_dict()
+        d["id"] = doc.id
+        drivers.append(d)
+    print("DEBUG: Query returned {} drivers".format(len(drivers)))
+    # If no drivers are found, pass a message to the list template.
+    if not drivers:
+        return templates.TemplateResponse("drivers_list.html", {
+            "request": request,
+            "drivers": drivers,
+            "message": "No drivers found matching your query."
+        })
+    return templates.TemplateResponse("drivers_list.html", {"request": request, "drivers": drivers})
+
 
 @app.get("/drivers/add", response_class=HTMLResponse)
 async def add_driver_form(request: Request):
@@ -134,6 +187,7 @@ async def add_driver_form(request: Request):
 
 #     firestore_db.collection("drivers").add(driver_data)
 #     return RedirectResponse(url="/drivers", status_code=status.HTTP_302_FOUND)
+
 @app.post("/drivers/add", response_class=RedirectResponse)
 async def add_driver(
     request: Request,
@@ -147,6 +201,18 @@ async def add_driver(
     team: str = Form(...)
     # Removed image parameter
 ):
+    # Check if the user is logged in
+    id_token = request.cookies.get("token")
+    user_token = validate_firebase_token(id_token)
+    if not user_token:
+        return RedirectResponse(url="/login", status_code=status.HTTP_302_FOUND)
+    
+    # Check if a driver with the same name already exists
+    existing_drivers = list(firestore_db.collection("drivers").where("name", "==", name).stream())
+    if len(existing_drivers) > 0:
+        # Return an error response (you can customize this message as needed)
+        return HTMLResponse("Driver with the same name already exists.", status_code=400)
+
     driver_data = {
         "name": name,
         "age": age,
@@ -228,6 +294,11 @@ async def edit_driver(
     team: str = Form(...)
     # Removed image parameter
 ):
+    id_token = request.cookies.get("token")
+    user_token = validate_firebase_token(id_token)
+    if not user_token:
+        return RedirectResponse(url="/login", status_code=status.HTTP_302_FOUND)
+
     driver_data = {
         "name": name,
         "age": age,
@@ -244,7 +315,12 @@ async def edit_driver(
     return RedirectResponse(url=f"/drivers/{driver_id}", status_code=status.HTTP_302_FOUND)
 
 @app.post("/drivers/delete/{driver_id}", response_class=RedirectResponse)
-async def delete_driver(driver_id: str):
+async def delete_driver(driver_id: str, request: Request):
+    id_token = request.cookies.get("token")
+    user_token = validate_firebase_token(id_token)
+    if not user_token:
+        return RedirectResponse(url="/login", status_code=status.HTTP_302_FOUND)
+    
     firestore_db.collection("drivers").document(driver_id).delete()
     return RedirectResponse(url="/drivers", status_code=status.HTTP_302_FOUND)
 
@@ -254,10 +330,53 @@ async def delete_driver(driver_id: str):
 
 @app.get("/teams", response_class=HTMLResponse)
 async def list_teams(request: Request):
-    # Query all teams from the "teams" collection
     teams_ref = firestore_db.collection("teams")
-    teams = [doc.to_dict() | {"id": doc.id} for doc in teams_ref.stream()]
+    teams = []
+    for doc in teams_ref.stream():
+        t = doc.to_dict()
+        t["id"] = doc.id
+        teams.append(t)
     return templates.TemplateResponse("teams_list.html", {"request": request, "teams": teams})
+
+
+
+# -------------------------
+# Team Query Endpoints
+# -------------------------
+
+@app.get("/teams/query", response_class=HTMLResponse)
+async def query_teams_form(request: Request):
+    return templates.TemplateResponse("query_teams.html", {"request": request})
+
+@app.post("/teams/query", response_class=HTMLResponse)
+async def query_teams(
+    request: Request,
+    attribute: str = Form(...),
+    operator: str = Form(...),
+    value: str = Form(...)
+):
+    teams_ref = firestore_db.collection("teams")
+    # If the attribute is numeric, convert the value to int.
+    if attribute in ["year_founded", "total_pole_positions", "total_race_wins", "total_constructor_titles", "finishing_position_previous_season"]:
+        try:
+            value = int(value)
+        except ValueError:
+            return HTMLResponse("Invalid numeric value provided.", status_code=400)
+    query = teams_ref.where(attribute, operator, value)
+    teams = []
+    for doc in query.stream():
+        t = doc.to_dict()
+        t["id"] = doc.id
+        teams.append(t)
+    print("DEBUG: Query returned {} teams".format(len(teams)))
+    if not teams:
+        return templates.TemplateResponse("teams_list.html", {
+            "request": request,
+            "teams": teams,
+            "message": "No teams found matching your query."
+        })
+    return templates.TemplateResponse("teams_list.html", {"request": request, "teams": teams})
+
 
 @app.get("/teams/add", response_class=HTMLResponse)
 async def add_team_form(request: Request):
@@ -305,6 +424,17 @@ async def add_team(
     finishing_position_previous_season: int = Form(...)
     # Removed logo parameter
 ):
+    id_token = request.cookies.get("token")
+    user_token = validate_firebase_token(id_token)
+    if not user_token:
+        return RedirectResponse(url="/login", status_code=status.HTTP_302_FOUND)
+    
+    # Check if a driver with the same name already exists
+    existing_teams = list(firestore_db.collection("teams").where("name", "==", name).stream())
+    if len(existing_teams) > 0:
+        # Return an error response (you can customize this message as needed)
+        return HTMLResponse("Team with the same name already exists.", status_code=400)
+
     team_data = {
         "name": name,
         "year_founded": year_founded,
@@ -387,6 +517,11 @@ async def edit_team(
     finishing_position_previous_season: int = Form(...)
     # Removed logo parameter
 ):
+    id_token = request.cookies.get("token")
+    user_token = validate_firebase_token(id_token)
+    if not user_token:
+        return RedirectResponse(url="/login", status_code=status.HTTP_302_FOUND)
+
     team_data = {
         "name": name,
         "year_founded": year_founded,
@@ -401,9 +536,15 @@ async def edit_team(
     return RedirectResponse(url=f"/teams/{team_id}", status_code=status.HTTP_302_FOUND)
 
 @app.post("/teams/delete/{team_id}", response_class=RedirectResponse)
-async def delete_team(team_id: str):
+async def delete_team(team_id: str, request: Request):
+    id_token = request.cookies.get("token")
+    user_token = validate_firebase_token(id_token)
+    if not user_token:
+        return RedirectResponse(url="/login", status_code=status.HTTP_302_FOUND)
+    
     firestore_db.collection("teams").document(team_id).delete()
     return RedirectResponse(url="/teams", status_code=status.HTTP_302_FOUND)
+
 
 # -------------------------
 # Comparison Endpoints
@@ -655,56 +796,7 @@ def seed_sample_data():
 async def startup_event():
     seed_sample_data()
 
-# -------------------------
-# Driver Query Endpoints
-# -------------------------
 
-@app.get("/drivers/query", response_class=HTMLResponse)
-async def query_drivers_form(request: Request):
-    # Render a form to select attribute, operator, and value for filtering drivers
-    return templates.TemplateResponse("query_drivers.html", {"request": request})
-
-@app.post("/drivers/query", response_class=HTMLResponse)
-async def query_drivers(
-    request: Request,
-    attribute: str = Form(...),
-    operator: str = Form(...),
-    value: str = Form(...)
-):
-    drivers_ref = firestore_db.collection("drivers")
-    # Convert value to int if the attribute is numeric
-    if attribute in ["age", "total_pole_positions", "total_race_wins", "total_points_scored", "total_world_titles", "total_fastest_laps"]:
-        try:
-            value = int(value)
-        except ValueError:
-            return HTMLResponse("Invalid numeric value provided.", status_code=400)
-    query = drivers_ref.where(attribute, operator, value)
-    drivers = [doc.to_dict() | {"id": doc.id} for doc in query.stream()]
-    return templates.TemplateResponse("drivers_list.html", {"request": request, "drivers": drivers})
-
-
-# -------------------------
-# Team Query Endpoints
-# -------------------------
-
-@app.get("/teams/query", response_class=HTMLResponse)
-async def query_teams_form(request: Request):
-    return templates.TemplateResponse("query_teams.html", {"request": request})
-
-@app.post("/teams/query", response_class=HTMLResponse)
-async def query_teams(
-    request: Request,
-    attribute: str = Form(...),
-    operator: str = Form(...),
-    value: str = Form(...)
-):
-    teams_ref = firestore_db.collection("teams")
-    if attribute in ["year_founded", "total_pole_positions", "total_race_wins", "total_constructor_titles", "finishing_position_previous_season"]:
-        try:
-            value = int(value)
-        except ValueError:
-            return HTMLResponse("Invalid numeric value provided.", status_code=400)
-    query = teams_ref.where(attribute, operator, value)
-    teams = [doc.to_dict() | {"id": doc.id} for doc in query.stream()]
-    return templates.TemplateResponse("teams_list.html", {"request": request, "teams": teams})
-
+if __name__ == "__main__":
+    import uvicorn
+    uvicorn.run("main:app", host="0.0.0.0", port=8000, reload=True)
