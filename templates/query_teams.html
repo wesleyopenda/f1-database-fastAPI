@@ -2,8 +2,8 @@
 {% block title %}Query Teams - F1 Database{% endblock %}
 {% block content %}
 <div class="container mt-4">
-  <h1>Query Teams</h1>
-  <form action="/teams/query" method="post">
+  <h1 class="text-center">Query Teams</h1>
+  <form action="/teams/query" method="post" class="w-50 mx-auto">
     <div class="mb-3">
       <label for="attribute" class="form-label">Select Attribute:</label>
       <select class="form-select" id="attribute" name="attribute" required>
@@ -27,7 +27,7 @@
       <label for="value" class="form-label">Value:</label>
       <input type="text" class="form-control" id="value" name="value" required>
     </div>
-    <button type="submit" class="btn btn-primary">Query Teams</button>
+    <button type="submit" class="btn btn-primary w-100">Query Teams</button>
   </form>
 </div>
 {% endblock %}

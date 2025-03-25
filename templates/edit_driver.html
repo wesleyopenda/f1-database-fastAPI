@@ -1,61 +1,53 @@
 {% extends "base.html" %}
-{% block title %}Home - F1 Database{% endblock %}
-
-<!DOCTYPE html>
-<html lang="en">
-<head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1">
-  <title>Edit Driver</title>
-  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
-</head>
-<body>
-  {% block content %}
-  <div class="container mt-4">
-    <h1>Edit Driver</h1>
-    <form action="/drivers/edit/{{ driver.id }}" method="post" enctype="multipart/form-data">
-      <div class="mb-3">
-        <label for="name" class="form-label">Driver Name</label>
-        <input type="text" class="form-control" id="name" name="name" value="{{ driver.name }}" required>
+{% block title %}Edit Driver - F1 Database{% endblock %}
+{% block content %}
+<div class="container">
+  <div class="row justify-content-center">
+    <div class="col-md-6">
+      <div class="card mt-4 shadow-sm">
+        <div class="card-header text-center">
+          <h3>Edit Driver</h3>
+        </div>
+        <div class="card-body">
+          <form action="/drivers/edit/{{ driver.id }}" method="post">
+            <div class="mb-3">
+              <label for="name" class="form-label">Driver Name</label>
+              <input type="text" class="form-control" id="name" name="name" value="{{ driver.name }}" required>
+            </div>
+            <div class="mb-3">
+              <label for="age" class="form-label">Age</label>
+              <input type="number" class="form-control" id="age" name="age" value="{{ driver.age }}" required>
+            </div>
+            <div class="mb-3">
+              <label for="total_pole_positions" class="form-label">Total Pole Positions</label>
+              <input type="number" class="form-control" id="total_pole_positions" name="total_pole_positions" value="{{ driver.total_pole_positions }}" required>
+            </div>
+            <div class="mb-3">
+              <label for="total_race_wins" class="form-label">Total Race Wins</label>
+              <input type="number" class="form-control" id="total_race_wins" name="total_race_wins" value="{{ driver.total_race_wins }}" required>
+            </div>
+            <div class="mb-3">
+              <label for="total_points_scored" class="form-label">Total Points Scored</label>
+              <input type="number" class="form-control" id="total_points_scored" name="total_points_scored" value="{{ driver.total_points_scored }}" required>
+            </div>
+            <div class="mb-3">
+              <label for="total_world_titles" class="form-label">Total World Titles</label>
+              <input type="number" class="form-control" id="total_world_titles" name="total_world_titles" value="{{ driver.total_world_titles }}" required>
+            </div>
+            <div class="mb-3">
+              <label for="total_fastest_laps" class="form-label">Total Fastest Laps</label>
+              <input type="number" class="form-control" id="total_fastest_laps" name="total_fastest_laps" value="{{ driver.total_fastest_laps }}" required>
+            </div>
+            <div class="mb-3">
+              <label for="team" class="form-label">Team</label>
+              <input type="text" class="form-control" id="team" name="team" value="{{ driver.team }}" required>
+            </div>
+            <button type="submit" class="btn btn-primary w-100">Update Driver</button>
+            <a href="/drivers/{{ driver.id }}" class="btn btn-secondary w-100 mt-2">Cancel</a>
+          </form>
+        </div>
       </div>
-      <div class="mb-3">
-        <label for="age" class="form-label">Age</label>
-        <input type="number" class="form-control" id="age" name="age" value="{{ driver.age }}" required>
-      </div>
-      <div class="mb-3">
-        <label for="total_pole_positions" class="form-label">Total Pole Positions</label>
-        <input type="number" class="form-control" id="total_pole_positions" name="total_pole_positions" value="{{ driver.total_pole_positions }}" required>
-      </div>
-      <div class="mb-3">
-        <label for="total_race_wins" class="form-label">Total Race Wins</label>
-        <input type="number" class="form-control" id="total_race_wins" name="total_race_wins" value="{{ driver.total_race_wins }}" required>
-      </div>
-      <div class="mb-3">
-        <label for="total_points_scored" class="form-label">Total Points Scored</label>
-        <input type="number" class="form-control" id="total_points_scored" name="total_points_scored" value="{{ driver.total_points_scored }}" required>
-      </div>
-      <div class="mb-3">
-        <label for="total_world_titles" class="form-label">Total World Titles</label>
-        <input type="number" class="form-control" id="total_world_titles" name="total_world_titles" value="{{ driver.total_world_titles }}" required>
-      </div>
-      <div class="mb-3">
-        <label for="total_fastest_laps" class="form-label">Total Fastest Laps</label>
-        <input type="number" class="form-control" id="total_fastest_laps" name="total_fastest_laps" value="{{ driver.total_fastest_laps }}" required>
-      </div>
-      <div class="mb-3">
-        <label for="team" class="form-label">Team</label>
-        <input type="text" class="form-control" id="team" name="team" value="{{ driver.team }}" required>
-      </div>
-      <!-- <div class="mb-3">
-        <label for="image" class="form-label">Driver Image (optional)</label>
-        <input type="file" class="form-control" id="image" name="image">
-      </div> -->
-      <button type="submit" class="btn btn-primary">Update Driver</button>
-      <a href="/drivers/{{ driver.id }}" class="btn btn-secondary">Cancel</a>
-    </form>
+    </div>
   </div>
-  {% endblock %}
-
-  <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
-</body>
-</html>
+</div>
+{% endblock %}

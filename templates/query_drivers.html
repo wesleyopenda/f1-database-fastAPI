@@ -2,8 +2,8 @@
 {% block title %}Query Drivers - F1 Database{% endblock %}
 {% block content %}
 <div class="container mt-4">
-  <h1>Query Drivers</h1>
-  <form action="/drivers/query" method="post">
+  <h1 class="text-center">Query Drivers</h1>
+  <form action="/drivers/query" method="post" class="w-50 mx-auto">
     <div class="mb-3">
       <label for="attribute" class="form-label">Select Attribute:</label>
       <select class="form-select" id="attribute" name="attribute" required>
@@ -28,7 +28,7 @@
       <label for="value" class="form-label">Value:</label>
       <input type="text" class="form-control" id="value" name="value" required>
     </div>
-    <button type="submit" class="btn btn-primary">Query Drivers</button>
+    <button type="submit" class="btn btn-primary w-100">Query Drivers</button>
   </form>
 </div>
 {% endblock %}

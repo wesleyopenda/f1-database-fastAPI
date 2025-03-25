@@ -1,52 +1,45 @@
 {% extends "base.html" %}
-{% block title %}Home - F1 Database{% endblock %}
-
-<!DOCTYPE html>
-<html lang="en">
-<head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1">
-  <title>Edit Team</title>
-  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
-</head>
-<body>
-  {% block content %}
-  <div class="container mt-4">
-    <h1>Edit Team</h1>
-    <form action="/teams/edit/{{ team.id }}" method="post" enctype="multipart/form-data">
-      <div class="mb-3">
-        <label for="name" class="form-label">Team Name</label>
-        <input type="text" class="form-control" id="name" name="name" value="{{ team.name }}" required>
+{% block title %}Edit Team - F1 Database{% endblock %}
+{% block content %}
+<div class="container">
+  <div class="row justify-content-center">
+    <div class="col-md-6">
+      <div class="card mt-4 shadow-sm">
+        <div class="card-header text-center">
+          <h3>Edit Team</h3>
+        </div>
+        <div class="card-body">
+          <form action="/teams/edit/{{ team.id }}" method="post">
+            <div class="mb-3">
+              <label for="name" class="form-label">Team Name</label>
+              <input type="text" class="form-control" id="name" name="name" value="{{ team.name }}" required>
+            </div>
+            <div class="mb-3">
+              <label for="year_founded" class="form-label">Year Founded</label>
+              <input type="number" class="form-control" id="year_founded" name="year_founded" value="{{ team.year_founded }}" required>
+            </div>
+            <div class="mb-3">
+              <label for="total_pole_positions" class="form-label">Total Pole Positions</label>
+              <input type="number" class="form-control" id="total_pole_positions" name="total_pole_positions" value="{{ team.total_pole_positions }}" required>
+            </div>
+            <div class="mb-3">
+              <label for="total_race_wins" class="form-label">Total Race Wins</label>
+              <input type="number" class="form-control" id="total_race_wins" name="total_race_wins" value="{{ team.total_race_wins }}" required>
+            </div>
+            <div class="mb-3">
+              <label for="total_constructor_titles" class="form-label">Total Constructor Titles</label>
+              <input type="number" class="form-control" id="total_constructor_titles" name="total_constructor_titles" value="{{ team.total_constructor_titles }}" required>
+            </div>
+            <div class="mb-3">
+              <label for="finishing_position_previous_season" class="form-label">Finishing Position in Previous Season</label>
+              <input type="number" class="form-control" id="finishing_position_previous_season" name="finishing_position_previous_season" value="{{ team.finishing_position_previous_season }}" required>
+            </div>
+            <button type="submit" class="btn btn-primary w-100">Update Team</button>
+            <a href="/teams/{{ team.id }}" class="btn btn-secondary w-100 mt-2">Cancel</a>
+          </form>
+        </div>
       </div>
-      <div class="mb-3">
-        <label for="year_founded" class="form-label">Year Founded</label>
-        <input type="number" class="form-control" id="year_founded" name="year_founded" value="{{ team.year_founded }}" required>
-      </div>
-      <div class="mb-3">
-        <label for="total_pole_positions" class="form-label">Total Pole Positions</label>
-        <input type="number" class="form-control" id="total_pole_positions" name="total_pole_positions" value="{{ team.total_pole_positions }}" required>
-      </div>
-      <div class="mb-3">
-        <label for="total_race_wins" class="form-label">Total Race Wins</label>
-        <input type="number" class="form-control" id="total_race_wins" name="total_race_wins" value="{{ team.total_race_wins }}" required>
-      </div>
-      <div class="mb-3">
-        <label for="total_constructor_titles" class="form-label">Total Constructor Titles</label>
-        <input type="number" class="form-control" id="total_constructor_titles" name="total_constructor_titles" value="{{ team.total_constructor_titles }}" required>
-      </div>
-      <div class="mb-3">
-        <label for="finishing_position_previous_season" class="form-label">Finishing Position in Previous Season</label>
-        <input type="number" class="form-control" id="finishing_position_previous_season" name="finishing_position_previous_season" value="{{ team.finishing_position_previous_season }}" required>
-      </div>
-      <!-- <div class="mb-3">
-        <label for="logo" class="form-label">Team Logo (optional)</label>
-        <input type="file" class="form-control" id="logo" name="logo">
-      </div> -->
-      <button type="submit" class="btn btn-primary">Update Team</button>
-      <a href="/teams/{{ team.id }}" class="btn btn-secondary">Cancel</a>
-    </form>
+    </div>
   </div>
-  {% endblock %}
-  <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
-</body>
-</html>
+</div>
+{% endblock %}
