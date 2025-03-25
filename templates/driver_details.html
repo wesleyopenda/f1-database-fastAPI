@@ -3,51 +3,36 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
-  <title>Add Driver</title>
+  <title>Driver Details</title>
   <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
 </head>
 <body>
   <div class="container mt-4">
-    <h1>Add New Driver</h1>
-    <form action="/drivers/add" method="post" enctype="multipart/form-data">
-      <div class="mb-3">
-        <label for="name" class="form-label">Driver Name</label>
-        <input type="text" class="form-control" id="name" name="name" required>
+    <h1>Driver Details</h1>
+    <div class="card">
+      {% if driver.image_url %}
+        <img src="{{ driver.image_url }}" class="card-img-top" alt="{{ driver.name }}">
+      {% else %}
+        <img src="https://via.placeholder.com/300x200.png?text=No+Image" class="card-img-top" alt="No Image">
+      {% endif %}
+      <div class="card-body">
+        <h5 class="card-title">{{ driver.name }}</h5>
+        <p class="card-text">
+          Age: {{ driver.age }}<br>
+          Total Pole Positions: {{ driver.total_pole_positions }}<br>
+          Total Race Wins: {{ driver.total_race_wins }}<br>
+          Total Points Scored: {{ driver.total_points_scored }}<br>
+          Total World Titles: {{ driver.total_world_titles }}<br>
+          Total Fastest Laps: {{ driver.total_fastest_laps }}<br>
+          Team: {{ driver.team }}
+        </p>
+        <a href="/drivers/edit/{{ driver.id }}" class="btn btn-warning">Edit</a>
+        <form action="/drivers/delete/{{ driver.id }}" method="post" style="display: inline;">
+          <button type="submit" class="btn btn-danger" onclick="return confirm('Are you sure you want to delete this driver?');">Delete</button>
+        </form>
+        <a href="/drivers" class="btn btn-secondary">Back to List</a>
       </div>
-      <div class="mb-3">
-        <label for="age" class="form-label">Age</label>
-        <input type="number" class="form-control" id="age" name="age" required>
-      </div>
-      <div class="mb-3">
-        <label for="total_pole_positions" class="form-label">Total Pole Positions</label>
-        <input type="number" class="form-control" id="total_pole_positions" name="total_pole_positions" required>
-      </div>
-      <div class="mb-3">
-        <label for="total_race_wins" class="form-label">Total Race Wins</label>
-        <input type="number" class="form-control" id="total_race_wins" name="total_race_wins" required>
-      </div>
-      <div class="mb-3">
-        <label for="total_points_scored" class="form-label">Total Points Scored</label>
-        <input type="number" class="form-control" id="total_points_scored" name="total_points_scored" required>
-      </div>
-      <div class="mb-3">
-        <label for="total_world_titles" class="form-label">Total World Titles</label>
-        <input type="number" class="form-control" id="total_world_titles" name="total_world_titles" required>
-      </div>
-      <div class="mb-3">
-        <label for="total_fastest_laps" class="form-label">Total Fastest Laps</label>
-        <input type="number" class="form-control" id="total_fastest_laps" name="total_fastest_laps" required>
-      </div>
-      <div class="mb-3">
-        <label for="team" class="form-label">Team</label>
-        <input type="text" class="form-control" id="team" name="team" required>
-      </div>
-      <div class="mb-3">
-        <label for="image" class="form-label">Driver Image (optional)</label>
-        <input type="file" class="form-control" id="image" name="image">
-      </div>
-      <button type="submit" class="btn btn-primary">Add Driver</button>
-    </form>
+    </div>
   </div>
   <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
 </body>

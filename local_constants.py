@@ -1,2 +1,2 @@
-PROJECT_NAME = "cpa-ass1"
-PROJECT_STORAGE_BUCKET = "cpa-ass1.appspot.com"
+PROJECT_NAME = "assignment01-453218"
+PROJECT_STORAGE_BUCKET = "assignment01-453218.firebasestorage.app"

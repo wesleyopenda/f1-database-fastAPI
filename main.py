@@ -48,8 +48,18 @@ async def home(request: Request):
     if user_token:
         user_doc = get_user(user_token)
         user_info = user_doc.get().to_dict()
+    
+    # Query pre-installed drivers from Firestore
+    drivers_ref = firestore_db.collection("drivers")
+    drivers = [doc.to_dict() | {"id": doc.id} for doc in drivers_ref.stream()]
+    
+    # Query pre-installed teams from Firestore
+    teams_ref = firestore_db.collection("teams")
+    teams = [doc.to_dict() | {"id": doc.id} for doc in teams_ref.stream()]
 
-    return templates.TemplateResponse("main.html", {"request": request,"user_token": user_token,"error_message": error_message,"user_info": user_info,"drivers": [],"teams": []})
+    print(f"DEBUG: Found {len(drivers)} drivers and {len(teams)} teams")
+
+    return templates.TemplateResponse("main.html", {"request": request,"user_token": user_token,"error_message": error_message,"user_info": user_info,"drivers": drivers,"teams": teams})
 
 if __name__ == "__main__":
     import uvicorn
@@ -69,6 +79,41 @@ async def list_drivers(request: Request):
 async def add_driver_form(request: Request):
     return templates.TemplateResponse("add_driver.html", {"request": request})
 
+# @app.post("/drivers/add", response_class=RedirectResponse)
+# async def add_driver(
+#     request: Request,
+#     name: str = Form(...),
+#     age: int = Form(...),
+#     total_pole_positions: int = Form(...),
+#     total_race_wins: int = Form(...),
+#     total_points_scored: int = Form(...),
+#     total_world_titles: int = Form(...),
+#     total_fastest_laps: int = Form(...),
+#     team: str = Form(...),
+#     image: UploadFile = File(None)
+# ):
+#     driver_data = {
+#         "name": name,
+#         "age": age,
+#         "total_pole_positions": total_pole_positions,
+#         "total_race_wins": total_race_wins,
+#         "total_points_scored": total_points_scored,
+#         "total_world_titles": total_world_titles,
+#         "total_fastest_laps": total_fastest_laps,
+#         "team": team,
+#         "image_url": None,
+#     }
+#     # Handle optional image upload
+#     if image is not None and image.filename != "":
+#         storage_client = storage.Client(project=local_constants.PROJECT_NAME)
+#         bucket = storage_client.bucket(local_constants.PROJECT_STORAGE_BUCKET)
+#         # Use a path that organizes driver images
+#         blob = bucket.blob(f"drivers/{image.filename}")
+#         blob.upload_from_file(image.file, content_type=image.content_type)
+#         driver_data["image_url"] = blob.public_url
+
+#     firestore_db.collection("drivers").add(driver_data)
+#     return RedirectResponse(url="/drivers", status_code=status.HTTP_302_FOUND)
 @app.post("/drivers/add", response_class=RedirectResponse)
 async def add_driver(
     request: Request,
@@ -79,8 +124,8 @@ async def add_driver(
     total_points_scored: int = Form(...),
     total_world_titles: int = Form(...),
     total_fastest_laps: int = Form(...),
-    team: str = Form(...),
-    image: UploadFile = File(None)
+    team: str = Form(...)
+    # Removed image parameter
 ):
     driver_data = {
         "name": name,
@@ -91,16 +136,8 @@ async def add_driver(
         "total_world_titles": total_world_titles,
         "total_fastest_laps": total_fastest_laps,
         "team": team,
-        "image_url": None,
+        "image_url": None,  # No image for now
     }
-    # Handle optional image upload
-    if image is not None and image.filename != "":
-        storage_client = storage.Client(project=local_constants.PROJECT_NAME)
-        bucket = storage_client.bucket(local_constants.PROJECT_STORAGE_BUCKET)
-        # Use a path that organizes driver images
-        blob = bucket.blob(f"drivers/{image.filename}")
-        blob.upload_from_file(image.file, content_type=image.content_type)
-        driver_data["image_url"] = blob.public_url
 
     firestore_db.collection("drivers").add(driver_data)
     return RedirectResponse(url="/drivers", status_code=status.HTTP_302_FOUND)
@@ -123,6 +160,40 @@ async def edit_driver_form(request: Request, driver_id: str):
     driver["id"] = driver_id
     return templates.TemplateResponse("edit_driver.html", {"request": request, "driver": driver})
 
+# @app.post("/drivers/edit/{driver_id}", response_class=RedirectResponse)
+# async def edit_driver(
+#     request: Request,
+#     driver_id: str,
+#     name: str = Form(...),
+#     age: int = Form(...),
+#     total_pole_positions: int = Form(...),
+#     total_race_wins: int = Form(...),
+#     total_points_scored: int = Form(...),
+#     total_world_titles: int = Form(...),
+#     total_fastest_laps: int = Form(...),
+#     team: str = Form(...),
+#     image: UploadFile = File(None)
+# ):
+#     driver_data = {
+#         "name": name,
+#         "age": age,
+#         "total_pole_positions": total_pole_positions,
+#         "total_race_wins": total_race_wins,
+#         "total_points_scored": total_points_scored,
+#         "total_world_titles": total_world_titles,
+#         "total_fastest_laps": total_fastest_laps,
+#         "team": team,
+#     }
+#     if image is not None and image.filename != "":
+#         storage_client = storage.Client(project=local_constants.PROJECT_NAME)
+#         bucket = storage_client.bucket(local_constants.PROJECT_STORAGE_BUCKET)
+#         blob = bucket.blob(f"drivers/{image.filename}")
+#         blob.upload_from_file(image.file, content_type=image.content_type)
+#         driver_data["image_url"] = blob.public_url
+
+#     firestore_db.collection("drivers").document(driver_id).update(driver_data)
+#     return RedirectResponse(url=f"/drivers/{driver_id}", status_code=status.HTTP_302_FOUND)
+
 @app.post("/drivers/edit/{driver_id}", response_class=RedirectResponse)
 async def edit_driver(
     request: Request,
@@ -134,8 +205,8 @@ async def edit_driver(
     total_points_scored: int = Form(...),
     total_world_titles: int = Form(...),
     total_fastest_laps: int = Form(...),
-    team: str = Form(...),
-    image: UploadFile = File(None)
+    team: str = Form(...)
+    # Removed image parameter
 ):
     driver_data = {
         "name": name,
@@ -146,13 +217,8 @@ async def edit_driver(
         "total_world_titles": total_world_titles,
         "total_fastest_laps": total_fastest_laps,
         "team": team,
+        # We leave out updating image_url since we're dropping image functionality
     }
-    if image is not None and image.filename != "":
-        storage_client = storage.Client(project=local_constants.PROJECT_NAME)
-        bucket = storage_client.bucket(local_constants.PROJECT_STORAGE_BUCKET)
-        blob = bucket.blob(f"drivers/{image.filename}")
-        blob.upload_from_file(image.file, content_type=image.content_type)
-        driver_data["image_url"] = blob.public_url
 
     firestore_db.collection("drivers").document(driver_id).update(driver_data)
     return RedirectResponse(url=f"/drivers/{driver_id}", status_code=status.HTTP_302_FOUND)
@@ -177,6 +243,37 @@ async def list_teams(request: Request):
 async def add_team_form(request: Request):
     return templates.TemplateResponse("add_team.html", {"request": request})
 
+# @app.post("/teams/add", response_class=RedirectResponse)
+# async def add_team(
+#     request: Request,
+#     name: str = Form(...),
+#     year_founded: int = Form(...),
+#     total_pole_positions: int = Form(...),
+#     total_race_wins: int = Form(...),
+#     total_constructor_titles: int = Form(...),
+#     finishing_position_previous_season: int = Form(...),
+#     logo: UploadFile = File(None)
+# ):
+#     team_data = {
+#         "name": name,
+#         "year_founded": year_founded,
+#         "total_pole_positions": total_pole_positions,
+#         "total_race_wins": total_race_wins,
+#         "total_constructor_titles": total_constructor_titles,
+#         "finishing_position_previous_season": finishing_position_previous_season,
+#         "logo_url": None,
+#     }
+#     # Handle optional logo upload
+#     if logo is not None and logo.filename != "":
+#         storage_client = storage.Client(project=local_constants.PROJECT_NAME)
+#         bucket = storage_client.bucket(local_constants.PROJECT_STORAGE_BUCKET)
+#         blob = bucket.blob(f"teams/{logo.filename}")
+#         blob.upload_from_file(logo.file, content_type=logo.content_type)
+#         team_data["logo_url"] = blob.public_url
+
+#     firestore_db.collection("teams").add(team_data)
+#     return RedirectResponse(url="/teams", status_code=status.HTTP_302_FOUND)
+
 @app.post("/teams/add", response_class=RedirectResponse)
 async def add_team(
     request: Request,
@@ -185,8 +282,8 @@ async def add_team(
     total_pole_positions: int = Form(...),
     total_race_wins: int = Form(...),
     total_constructor_titles: int = Form(...),
-    finishing_position_previous_season: int = Form(...),
-    logo: UploadFile = File(None)
+    finishing_position_previous_season: int = Form(...)
+    # Removed logo parameter
 ):
     team_data = {
         "name": name,
@@ -195,15 +292,8 @@ async def add_team(
         "total_race_wins": total_race_wins,
         "total_constructor_titles": total_constructor_titles,
         "finishing_position_previous_season": finishing_position_previous_season,
-        "logo_url": None,
+        "logo_url": None,  # No logo for now
     }
-    # Handle optional logo upload
-    if logo is not None and logo.filename != "":
-        storage_client = storage.Client(project=local_constants.PROJECT_NAME)
-        bucket = storage_client.bucket(local_constants.PROJECT_STORAGE_BUCKET)
-        blob = bucket.blob(f"teams/{logo.filename}")
-        blob.upload_from_file(logo.file, content_type=logo.content_type)
-        team_data["logo_url"] = blob.public_url
 
     firestore_db.collection("teams").add(team_data)
     return RedirectResponse(url="/teams", status_code=status.HTTP_302_FOUND)
@@ -235,6 +325,36 @@ async def edit_team_form(request: Request, team_id: str):
     team["id"] = team_id
     return templates.TemplateResponse("edit_team.html", {"request": request, "team": team})
 
+# @app.post("/teams/edit/{team_id}", response_class=RedirectResponse)
+# async def edit_team(
+#     request: Request,
+#     team_id: str,
+#     name: str = Form(...),
+#     year_founded: int = Form(...),
+#     total_pole_positions: int = Form(...),
+#     total_race_wins: int = Form(...),
+#     total_constructor_titles: int = Form(...),
+#     finishing_position_previous_season: int = Form(...),
+#     logo: UploadFile = File(None)
+# ):
+#     team_data = {
+#         "name": name,
+#         "year_founded": year_founded,
+#         "total_pole_positions": total_pole_positions,
+#         "total_race_wins": total_race_wins,
+#         "total_constructor_titles": total_constructor_titles,
+#         "finishing_position_previous_season": finishing_position_previous_season,
+#     }
+#     if logo is not None and logo.filename != "":
+#         storage_client = storage.Client(project=local_constants.PROJECT_NAME)
+#         bucket = storage_client.bucket(local_constants.PROJECT_STORAGE_BUCKET)
+#         blob = bucket.blob(f"teams/{logo.filename}")
+#         blob.upload_from_file(logo.file, content_type=logo.content_type)
+#         team_data["logo_url"] = blob.public_url
+
+#     firestore_db.collection("teams").document(team_id).update(team_data)
+#     return RedirectResponse(url=f"/teams/{team_id}", status_code=status.HTTP_302_FOUND)
+
 @app.post("/teams/edit/{team_id}", response_class=RedirectResponse)
 async def edit_team(
     request: Request,
@@ -244,8 +364,8 @@ async def edit_team(
     total_pole_positions: int = Form(...),
     total_race_wins: int = Form(...),
     total_constructor_titles: int = Form(...),
-    finishing_position_previous_season: int = Form(...),
-    logo: UploadFile = File(None)
+    finishing_position_previous_season: int = Form(...)
+    # Removed logo parameter
 ):
     team_data = {
         "name": name,
@@ -254,13 +374,8 @@ async def edit_team(
         "total_race_wins": total_race_wins,
         "total_constructor_titles": total_constructor_titles,
         "finishing_position_previous_season": finishing_position_previous_season,
+        # logo_url remains unchanged
     }
-    if logo is not None and logo.filename != "":
-        storage_client = storage.Client(project=local_constants.PROJECT_NAME)
-        bucket = storage_client.bucket(local_constants.PROJECT_STORAGE_BUCKET)
-        blob = bucket.blob(f"teams/{logo.filename}")
-        blob.upload_from_file(logo.file, content_type=logo.content_type)
-        team_data["logo_url"] = blob.public_url
 
     firestore_db.collection("teams").document(team_id).update(team_data)
     return RedirectResponse(url=f"/teams/{team_id}", status_code=status.HTTP_302_FOUND)
@@ -297,8 +412,6 @@ async def compare_drivers(
     driver1 = doc1.to_dict()
     driver2 = doc2.to_dict()
 
-    # Compare key statistics:
-    # For age, lower is better; for all others, higher is better.
     stats = ["age", "total_pole_positions", "total_race_wins", "total_points_scored", "total_world_titles", "total_fastest_laps"]
     comparison = []
     for stat in stats:
@@ -324,12 +437,15 @@ async def compare_drivers(
             "driver2_value": value2,
             "better": better
         })
+    print("DEBUG: Comparison Data:", comparison)  # Debug print
+
     return templates.TemplateResponse("compare_drivers.html", {
         "request": request,
         "driver1": driver1,
         "driver2": driver2,
         "comparison": comparison
     })
+
 
 # Team Comparison
 
@@ -386,3 +502,84 @@ async def compare_teams(
         "team2": team2,
         "comparison": comparison
     })
+
+def seed_sample_data():
+    # Seed sample drivers if none exist
+    drivers_ref = firestore_db.collection("drivers")
+    if not any(drivers_ref.stream()):
+        sample_drivers = [
+            {
+                "name": "Lewis Hamilton",
+                "age": 37,
+                "total_pole_positions": 100,
+                "total_race_wins": 103,
+                "total_points_scored": 5000,
+                "total_world_titles": 7,
+                "total_fastest_laps": 50,
+                "team": "Mercedes",
+                "image_url": None,
+            },
+            {
+                "name": "Max Verstappen",
+                "age": 25,
+                "total_pole_positions": 60,
+                "total_race_wins": 50,
+                "total_points_scored": 3000,
+                "total_world_titles": 2,
+                "total_fastest_laps": 30,
+                "team": "Red Bull",
+                "image_url": None,
+            },
+            {
+                "name": "Charles Leclerc",
+                "age": 26,
+                "total_pole_positions": 20,
+                "total_race_wins": 5,
+                "total_points_scored": 1200,
+                "total_world_titles": 0,
+                "total_fastest_laps": 10,
+                "team": "Ferrari",
+                "image_url": None,
+            },
+        ]
+        for driver in sample_drivers:
+            firestore_db.collection("drivers").add(driver)
+
+    # Seed sample teams if none exist
+    teams_ref = firestore_db.collection("teams")
+    if not any(teams_ref.stream()):
+        sample_teams = [
+            {
+                "name": "Mercedes",
+                "year_founded": 1954,
+                "total_pole_positions": 150,
+                "total_race_wins": 120,
+                "total_constructor_titles": 8,
+                "finishing_position_previous_season": 1,
+                "logo_url": None,
+            },
+            {
+                "name": "Red Bull",
+                "year_founded": 2005,
+                "total_pole_positions": 100,
+                "total_race_wins": 90,
+                "total_constructor_titles": 4,
+                "finishing_position_previous_season": 2,
+                "logo_url": None,
+            },
+            {
+                "name": "Ferrari",
+                "year_founded": 1929,
+                "total_pole_positions": 130,
+                "total_race_wins": 110,
+                "total_constructor_titles": 16,
+                "finishing_position_previous_season": 3,
+                "logo_url": None,
+            },
+        ]
+        for team in sample_teams:
+            firestore_db.collection("teams").add(team)
+
+@app.on_event("startup")
+async def startup_event():
+    seed_sample_data()
