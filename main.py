@@ -583,3 +583,57 @@ def seed_sample_data():
 @app.on_event("startup")
 async def startup_event():
     seed_sample_data()
+
+# -------------------------
+# Driver Query Endpoints
+# -------------------------
+
+@app.get("/drivers/query", response_class=HTMLResponse)
+async def query_drivers_form(request: Request):
+    # Render a form to select attribute, operator, and value for filtering drivers
+    return templates.TemplateResponse("query_drivers.html", {"request": request})
+
+@app.post("/drivers/query", response_class=HTMLResponse)
+async def query_drivers(
+    request: Request,
+    attribute: str = Form(...),
+    operator: str = Form(...),
+    value: str = Form(...)
+):
+    drivers_ref = firestore_db.collection("drivers")
+    # Convert value to int if the attribute is numeric
+    if attribute in ["age", "total_pole_positions", "total_race_wins", "total_points_scored", "total_world_titles", "total_fastest_laps"]:
+        try:
+            value = int(value)
+        except ValueError:
+            return HTMLResponse("Invalid numeric value provided.", status_code=400)
+    query = drivers_ref.where(attribute, operator, value)
+    drivers = [doc.to_dict() | {"id": doc.id} for doc in query.stream()]
+    return templates.TemplateResponse("drivers_list.html", {"request": request, "drivers": drivers})
+
+
+# -------------------------
+# Team Query Endpoints
+# -------------------------
+
+@app.get("/teams/query", response_class=HTMLResponse)
+async def query_teams_form(request: Request):
+    return templates.TemplateResponse("query_teams.html", {"request": request})
+
+@app.post("/teams/query", response_class=HTMLResponse)
+async def query_teams(
+    request: Request,
+    attribute: str = Form(...),
+    operator: str = Form(...),
+    value: str = Form(...)
+):
+    teams_ref = firestore_db.collection("teams")
+    if attribute in ["year_founded", "total_pole_positions", "total_race_wins", "total_constructor_titles", "finishing_position_previous_season"]:
+        try:
+            value = int(value)
+        except ValueError:
+            return HTMLResponse("Invalid numeric value provided.", status_code=400)
+    query = teams_ref.where(attribute, operator, value)
+    teams = [doc.to_dict() | {"id": doc.id} for doc in query.stream()]
+    return templates.TemplateResponse("teams_list.html", {"request": request, "teams": teams})
+
