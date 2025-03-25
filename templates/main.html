@@ -1,68 +1,89 @@
 {% extends "base.html" %}
 {% block title %}Home - F1 Database{% endblock %}
+{% block content %}
 
-<!DOCTYPE html>
-<html lang="en">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Home</title>
-    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
-    <link rel="stylesheet" href="{{ url_for('static', path='/styles.css') }}">
-</head>
-<body>
-      <div class="container mt-4">
-        {% if error_message %}
-          <div class="alert alert-danger">{{ error_message }}</div>
-        {% endif %}
-
-        {% block content %}
-
-        <h1>Welcome to the F1 Database</h1>
-        <p>This platform provides data on Formula 1 drivers and teams.</p>
-  
-        <h2>Drivers</h2>
-        <div class="row">
-          {% for driver in drivers %}
-            <div class="col-md-4 mb-3">
-              <div class="card">
-                {% if driver.image_url %}
-                  <img src="{{ driver.image_url }}" class="card-img-top" alt="{{ driver.name }}">
-                {% else %}
-                  <img src="https://via.placeholder.com/300x200.png?text=No+Image" class="card-img-top" alt="No Image">
-                {% endif %}
-                <div class="card-body">
-                  <h5 class="card-title">{{ driver.name }}</h5>
-                  <p class="card-text">Team: {{ driver.team }}</p>
-                  <a href="/drivers/{{ driver.id }}" class="btn btn-primary">View Details</a>
-                </div>
-              </div>
-            </div>
-          {% endfor %}
-        </div>
-  
-        <h2>Teams</h2>
-        <div class="row">
-          {% for team in teams %}
-            <div class="col-md-4 mb-3">
-              <div class="card">
-                {% if team.logo_url %}
-                  <img src="{{ team.logo_url }}" class="card-img-top" alt="{{ team.name }}">
-                {% else %}
-                  <img src="https://via.placeholder.com/300x200.png?text=No+Logo" class="card-img-top" alt="No Logo">
-                {% endif %}
-                <div class="card-body">
-                  <h5 class="card-title">{{ team.name }}</h5>
-                  <a href="/teams/{{ team.id }}" class="btn btn-primary">View Details</a>
-                </div>
-              </div>
-            </div>
-          {% endfor %}
-        </div>
-        {% endblock %}
+<!-- Carousel Section -->
+<div id="homeCarousel" class="carousel slide mb-4" data-bs-ride="carousel">
+  <div class="carousel-inner">
+    <div class="carousel-item active">
+      <img src="https://storage.googleapis.com/assignment01-453218.appspot.com/carousel.jpg" class="d-block w-100" alt="Welcome">
+      <div class="carousel-caption d-none d-md-block">
+        <h5>Welcome to F1 Database</h5>
+        <p>Your one-stop destination for Formula 1 driver and team data.</p>
       </div>
+    </div>
+    <div class="carousel-item">
+      <img src="https://storage.googleapis.com/assignment01-453218.appspot.com/carousel2.jpg" class="d-block w-100" alt="Explore Drivers">
+      <div class="carousel-caption d-none d-md-block">
+        <h5>Explore Top Drivers</h5>
+        <p>View detailed statistics and compare performance.</p>
+      </div>
+    </div>
+    <div class="carousel-item">
+      <img src="https://storage.googleapis.com/assignment01-453218.appspot.com/carousel3.png" class="d-block w-100" alt="Discover Teams">
+      <div class="carousel-caption d-none d-md-block">
+        <h5>Discover the Teams</h5>
+        <p>Learn about the teams and their racing heritage.</p>
+      </div>
+    </div>
+  </div>
+  <button class="carousel-control-prev" type="button" data-bs-target="#homeCarousel" data-bs-slide="prev">
+    <span class="carousel-control-prev-icon" aria-hidden="true"></span>
+    <span class="visually-hidden">Previous</span>
+  </button>
+  <button class="carousel-control-next" type="button" data-bs-target="#homeCarousel" data-bs-slide="next">
+    <span class="carousel-control-next-icon" aria-hidden="true"></span>
+    <span class="visually-hidden">Next</span>
+  </button>
+</div>
 
-      <script type="module" src="{{ url_for('static', path='/firebase-login.js') }}"></script>
-      <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>   
-</body>
-</html>
+<!-- Main Content Section -->
+<div class="container mt-4">
+  {% if error_message %}
+    <div class="alert alert-danger">{{ error_message }}</div>
+  {% endif %}
+
+  <h1>Welcome to the F1 Database</h1>
+  <p>This platform provides data on Formula 1 drivers and teams.</p>
+
+  <h2>Drivers</h2>
+  <div class="row">
+    {% for driver in drivers %}
+      <div class="col-md-4 mb-3">
+        <div class="card">
+          {% if driver.image_url %}
+            <img src="{{ driver.image_url }}" class="card-img-top" alt="{{ driver.name }}">
+          {% else %}
+            <img src="https://via.placeholder.com/300x200.png?text=No+Image" class="card-img-top" alt="No Image">
+          {% endif %}
+          <div class="card-body">
+            <h5 class="card-title">{{ driver.name }}</h5>
+            <p class="card-text">Team: {{ driver.team }}</p>
+            <a href="/drivers/{{ driver.id }}" class="btn btn-primary">View Details</a>
+          </div>
+        </div>
+      </div>
+    {% endfor %}
+  </div>
+
+  <h2>Teams</h2>
+  <div class="row">
+    {% for team in teams %}
+      <div class="col-md-4 mb-3">
+        <div class="card">
+          {% if team.logo_url %}
+            <img src="{{ team.logo_url }}" class="card-img-top" alt="{{ team.name }}">
+          {% else %}
+            <img src="https://via.placeholder.com/300x200.png?text=No+Logo" class="card-img-top" alt="No Logo">
+          {% endif %}
+          <div class="card-body">
+            <h5 class="card-title">{{ team.name }}</h5>
+            <a href="/teams/{{ team.id }}" class="btn btn-primary">View Details</a>
+          </div>
+        </div>
+      </div>
+    {% endfor %}
+  </div>
+</div>
+
+{% endblock %}

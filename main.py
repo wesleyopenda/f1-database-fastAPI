@@ -458,7 +458,11 @@ async def team_details(request: Request, team_id: str):
 
     # Query drivers associated with this team. We assume driver documents have a "team" field.
     drivers_ref = firestore_db.collection("drivers").where("team", "==", team["name"])
-    drivers = [doc.to_dict() | {"id": doc.id} for doc in drivers_ref.stream()]
+    drivers = []
+    for doc in drivers_ref.stream():
+        d = doc.to_dict()
+        d["id"] = doc.id
+        drivers.append(d)
 
     return templates.TemplateResponse("team_details.html", {
         "request": request,

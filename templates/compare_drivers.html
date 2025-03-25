@@ -1,41 +1,34 @@
 {% extends "base.html" %}
-{% block title %}Home - F1 Database{% endblock %}
+{% block title %}Driver Comparison - F1 Database{% endblock %}
+{% block extra_css %}
+<style>
+  .better {
+    background-color: #d4edda !important; /* Light green, with !important to override defaults */
+  }
+</style>
+{% endblock %}
+{% block content %}
+<div class="container mt-4">
+  <h1>Driver Comparison</h1>
+  <table class="table table-bordered">
+    <thead>
+      <tr>
+        <th>Statistic</th>
+        <th>{{ driver1.name }}</th>
+        <th>{{ driver2.name }}</th>
+      </tr>
+    </thead>
+    <tbody>
+      {% for comp in comparison %}
+      <tr>
+        <td>{{ comp.stat | capitalize }}</td>
+        <td class="{% if comp.better == 'driver1' %}better{% endif %}">{{ comp.driver1_value }}</td>
+        <td class="{% if comp.better == 'driver2' %}better{% endif %}">{{ comp.driver2_value }}</td>
+      </tr>
+      {% endfor %}
+    </tbody>
+  </table>
+  <a href="/compare/drivers" class="btn btn-secondary">Back</a>
+</div>
+{% endblock %}
 
-<!DOCTYPE html>
-<html lang="en">
-<head>
-  <meta charset="UTF-8">
-  <title>Driver Comparison</title>
-  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
-  <style>
-    .better { background-color: #a1f7a1 !important; } /* Light green highlight */
-  </style>
-</head>
-<body>
-  {% block content %}
-  <div class="container mt-4">
-    <h1>Driver Comparison</h1>
-    <table class="table table-bordered">
-      <thead>
-        <tr>
-          <th>Statistic</th>
-          <th>{{ driver1.name }}</th>
-          <th>{{ driver2.name }}</th>
-        </tr>
-      </thead>
-      <tbody>
-        {% for comp in comparison %}
-        <tr>
-          <td>{{ comp.stat | capitalize }}</td>
-          <td class="{% if comp.better == 'driver1' %}better{% endif %}">{{ comp.driver1_value }}</td>
-          <td class="{% if comp.better == 'driver2' %}better{% endif %}">{{ comp.driver2_value }}</td>
-        </tr>
-        {% endfor %}
-      </tbody>
-    </table>
-    <a href="/compare/drivers" class="btn btn-secondary">Back</a>
-  </div>
-  {% endblock %}
-  <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
-</body>
-</html>
