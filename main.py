@@ -66,6 +66,26 @@ if __name__ == "__main__":
     uvicorn.run("main:app", host="0.0.0.0", port=8080, reload=True)
 
 # -------------------------
+# Authentication Endpoints
+# -------------------------
+
+@app.get("/login", response_class=HTMLResponse)
+async def login_page(request: Request):
+    return templates.TemplateResponse("login.html", {"request": request})
+
+@app.get("/signup", response_class=HTMLResponse)
+async def signup_page(request: Request):
+    return templates.TemplateResponse("signup.html", {"request": request})
+
+@app.get("/logout", response_class=RedirectResponse)
+async def logout(request: Request):
+    # Create a redirect response to the home page and delete the "token" cookie.
+    response = RedirectResponse(url="/", status_code=status.HTTP_302_FOUND)
+    response.delete_cookie("token")
+    return response
+
+
+# -------------------------
 # Driver Endpoints
 # -------------------------
 
@@ -512,11 +532,11 @@ def seed_sample_data():
                 "name": "Lewis Hamilton",
                 "age": 37,
                 "total_pole_positions": 100,
-                "total_race_wins": 103,
+                "total_race_wins": 104,
                 "total_points_scored": 5000,
                 "total_world_titles": 7,
                 "total_fastest_laps": 50,
-                "team": "Mercedes",
+                "team": "Ferrari",
                 "image_url": None,
             },
             {
@@ -539,6 +559,39 @@ def seed_sample_data():
                 "total_world_titles": 0,
                 "total_fastest_laps": 10,
                 "team": "Ferrari",
+                "image_url": None,
+            },
+                        {
+                "name": "Lando Norris",
+                "age": 23,
+                "total_pole_positions": 5,
+                "total_race_wins": 4,
+                "total_points_scored": 800,
+                "total_world_titles": 0,
+                "total_fastest_laps": 10,
+                "team": "McClaren",
+                "image_url": None,
+            },
+                        {
+                "name": "George Russel",
+                "age": 24,
+                "total_pole_positions": 3,
+                "total_race_wins": 2,
+                "total_points_scored": 900,
+                "total_world_titles": 0,
+                "total_fastest_laps": 6,
+                "team": "Mercedes",
+                "image_url": None,
+            },
+                        {
+                "name": "Alex Albon",
+                "age": 25,
+                "total_pole_positions": 1,
+                "total_race_wins": 2,
+                "total_points_scored": 850,
+                "total_world_titles": 0,
+                "total_fastest_laps": 3,
+                "team": "Williams",
                 "image_url": None,
             },
         ]
@@ -574,6 +627,24 @@ def seed_sample_data():
                 "total_race_wins": 110,
                 "total_constructor_titles": 16,
                 "finishing_position_previous_season": 3,
+                "logo_url": None,
+            },
+            {
+                "name": "McClaren",
+                "year_founded": 1963,
+                "total_pole_positions": 164,
+                "total_race_wins": 191,
+                "total_constructor_titles": 9,
+                "finishing_position_previous_season": 1,
+                "logo_url": None,
+            },
+            {
+                "name": "Williams",
+                "year_founded": 1985,
+                "total_pole_positions": 100,
+                "total_race_wins": 30,
+                "total_constructor_titles": 2,
+                "finishing_position_previous_season": 10,
                 "logo_url": None,
             },
         ]
