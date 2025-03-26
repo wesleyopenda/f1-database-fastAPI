@@ -552,11 +552,16 @@ async def compare_drivers(
     driver1_id: str = Form(...),
     driver2_id: str = Form(...)
 ):
+    # Ensure that two different drivers are selected.
+    if driver1_id == driver2_id:
+        return HTMLResponse("Please select two different drivers for comparison.", status_code=400)
+    
     # Retrieve driver documents
     doc1 = firestore_db.collection("drivers").document(driver1_id).get()
     doc2 = firestore_db.collection("drivers").document(driver2_id).get()
     if not doc1.exists or not doc2.exists:
         return HTMLResponse("One or both drivers not found", status_code=404)
+    
     driver1 = doc1.to_dict()
     driver2 = doc2.to_dict()
 
@@ -608,6 +613,10 @@ async def compare_teams(
     team1_id: str = Form(...),
     team2_id: str = Form(...)
 ):
+    # Ensure that two different teams are selected.
+    if team1_id == team2_id:
+        return HTMLResponse("Please select two different teams for comparison.", status_code=400)
+
     doc1 = firestore_db.collection("teams").document(team1_id).get()
     doc2 = firestore_db.collection("teams").document(team2_id).get()
     if not doc1.exists or not doc2.exists:
