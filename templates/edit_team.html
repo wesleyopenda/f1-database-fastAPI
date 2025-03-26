@@ -9,7 +9,7 @@
           <h3>Edit Team</h3>
         </div>
         <div class="card-body">
-          <form action="/teams/edit/{{ team.id }}" method="post">
+          <form action="/teams/edit/{{ team.id }}" method="post" enctype="multipart/form-data">
             <div class="mb-3">
               <label for="name" class="form-label">Team Name</label>
               <input type="text" class="form-control" id="name" name="name" value="{{ team.name }}" required>
@@ -33,6 +33,10 @@
             <div class="mb-3">
               <label for="finishing_position_previous_season" class="form-label">Finishing Position in Previous Season</label>
               <input type="number" class="form-control" id="finishing_position_previous_season" name="finishing_position_previous_season" value="{{ team.finishing_position_previous_season }}" required>
+            </div>
+            <div class="mb-3">
+              <label for="logo" class="form-label">Team Logo (optional)</label>
+              <input type="file" class="form-control" id="logo" name="logo">
             </div>
             <button type="submit" class="btn btn-primary w-100">Update Team</button>
             <a href="/teams/{{ team.id }}" class="btn btn-secondary w-100 mt-2">Cancel</a>

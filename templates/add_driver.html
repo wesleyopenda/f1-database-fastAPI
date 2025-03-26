@@ -9,7 +9,7 @@
           <h3>Add Driver</h3>
         </div>
         <div class="card-body">
-          <form action="/drivers/add" method="post">
+          <form action="/drivers/add" method="post" enctype="multipart/form-data">
             <div class="mb-3">
               <label for="name" class="form-label">Driver Name</label>
               <input type="text" class="form-control" id="name" name="name" required>
@@ -41,6 +41,10 @@
             <div class="mb-3">
               <label for="team" class="form-label">Team</label>
               <input type="text" class="form-control" id="team" name="team" required>
+            </div>
+            <div class="mb-3">
+              <label for="image" class="form-label">Driver Image (optional)</label>
+              <input type="file" class="form-control" id="image" name="image">
             </div>
             <button type="submit" class="btn btn-primary w-100">Add Driver</button>
           </form>
