@@ -65,7 +65,6 @@ async def home(request: Request):
         t["id"] = doc.id
         teams.append(t)
 
-    print(f"DEBUG: Found {len(drivers)} drivers and {len(teams)} teams")
 
     return templates.TemplateResponse("main.html", {"request": request,"user_token": user_token,"error_message": error_message,"user_info": user_info,"drivers": drivers,"teams": teams})
 
@@ -602,7 +601,6 @@ async def compare_drivers(
             "driver2_value": value2,
             "better": better
         })
-    print("DEBUG: Comparison Data:", comparison)  # Debug print
 
     return templates.TemplateResponse("compare_drivers.html", {
         "request": request,
