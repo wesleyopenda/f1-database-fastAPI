@@ -10,7 +10,6 @@
         </div>
         <div class="card-body">
           <div class="row">
-            <!-- Left Column: Driver Image -->
             <div class="col-md-6">
               {% if driver.image_url %}
                 <img src="{{ driver.image_url }}" class="img-fluid" alt="{{ driver.name }}">
@@ -18,7 +17,6 @@
                 <img src="https://via.placeholder.com/400x200.png?text=No+Image" class="img-fluid" alt="No Image">
               {% endif %}
             </div>
-            <!-- Right Column: Driver Details -->
             <div class="col-md-6">
               <p><strong>Age:</strong> {{ driver.age }}</p>
               <p><strong>Total Pole Positions:</strong> {{ driver.total_pole_positions }}</p>
@@ -29,7 +27,6 @@
               <p><strong>Team:</strong> {{ driver.team }}</p>
             </div>
           </div>
-          <!-- Action Buttons -->
           <div class="d-flex justify-content-between mt-4">
             <a href="/drivers/edit/{{ driver.id }}" class="btn btn-warning">Edit</a>
             <form action="/drivers/delete/{{ driver.id }}" method="post" onsubmit="return confirm('Are you sure you want to delete this driver?');">

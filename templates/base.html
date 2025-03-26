@@ -4,13 +4,11 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>{% block title %}F1 Database{% endblock %}</title>
-  <!-- Bootstrap CSS -->
   <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
   <link rel="stylesheet" href="{{ url_for('static', path='/styles.css') }}">
   {% block extra_css %}{% endblock %}
 </head>
 <body>
-  <!-- Menubar -->
   <nav class="navbar navbar-expand-lg navbar-dark bg-dark">
     <div class="container">
       <a class="navbar-brand" href="/">F1 Database</a>
@@ -20,11 +18,9 @@
       </button>
       <div class="collapse navbar-collapse" id="navbarNavDropdown">
         <ul class="navbar-nav me-auto">
-          <!-- Home Tab -->
           <li class="nav-item">
             <a class="nav-link" href="/">Home</a>
           </li>
-          <!-- Drivers Dropdown -->
           <li class="nav-item dropdown">
             <a class="nav-link dropdown-toggle" href="#" id="driversDropdown" role="button" data-bs-toggle="dropdown" aria-expanded="false">
               Drivers
@@ -34,7 +30,6 @@
               <li><a class="dropdown-item" href="/drivers/add">Add Driver</a></li>
             </ul>
           </li>
-          <!-- Teams Dropdown -->
           <li class="nav-item dropdown">
             <a class="nav-link dropdown-toggle" href="#" id="teamsDropdown" role="button" data-bs-toggle="dropdown" aria-expanded="false">
               Teams
@@ -44,7 +39,6 @@
               <li><a class="dropdown-item" href="/teams/add">Add Team</a></li>
             </ul>
           </li>
-          <!-- Compare Dropdown -->
           <li class="nav-item dropdown">
             <a class="nav-link dropdown-toggle" href="#" id="compareDropdown" role="button" data-bs-toggle="dropdown" aria-expanded="false">
               Compare
@@ -54,7 +48,6 @@
               <li><a class="dropdown-item" href="/compare/teams">Compare Teams</a></li>
             </ul>
           </li>
-          <!-- Query Dropdown -->
           <li class="nav-item dropdown">
             <a class="nav-link dropdown-toggle" href="#" id="queryDropdown" role="button" data-bs-toggle="dropdown" aria-expanded="false">
               Query
@@ -86,17 +79,13 @@
     </div>
   </nav>
 
-  <!-- Main Content Area -->
   <div class="container mt-4">
     {% block content %}{% endblock %}
   </div>
 
-  <!-- Hidden sign-out button for Firebase -->
   <button id="sign-out" style="display:none;"></button>
 
-  <!-- Bootstrap JS Bundle -->
   <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
-  <!-- Firebase Authentication JS (as provided in the examples) -->
   <script type="module" src="{{ url_for('static', path='/firebase-login.js') }}"></script>
 </body>
 </html>

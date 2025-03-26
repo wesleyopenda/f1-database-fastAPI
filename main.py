@@ -20,7 +20,7 @@ def get_user(user_token):
     doc_ref = firestore_db.collection('users').document(user_token['user_id'])
     doc = doc_ref.get()
     if not doc.exists:
-        # Create default user data if not present, using the token's email if available.
+        
         user_data = {
             "name": user_token.get("email", "John Doe"),
             "email": user_token.get("email", "Unknown")
@@ -44,14 +44,13 @@ async def root(request: Request):
     error_message = ""
     user_token = validate_firebase_token(id_token)
     user_info = {}
-
     if user_token:
         user_doc = get_user(user_token)
         user_info = user_doc.get().to_dict()
-        # Ensure that user_token includes an 'email' key using the Firestore user document.
         user_token["email"] = user_info.get("email", "Unknown")
+    else:
+        user_token = None
 
-    # Query pre-installed drivers from Firestore
     drivers_ref = firestore_db.collection("drivers")
     drivers = []
     for doc in drivers_ref.stream():
@@ -59,15 +58,12 @@ async def root(request: Request):
         d["id"] = doc.id
         drivers.append(d)
 
-    # Query pre-installed teams from Firestore
     teams_ref = firestore_db.collection("teams")
     teams = []
     for doc in teams_ref.stream():
         t = doc.to_dict()
         t["id"] = doc.id
         teams.append(t)
-
-    print(f"DEBUG: Found {len(drivers)} drivers and {len(teams)} teams")
 
     return templates.TemplateResponse("main.html", {
         "request": request,
@@ -78,9 +74,7 @@ async def root(request: Request):
         "teams": teams
     })
 
-# -------------------------
 # Authentication Endpoints
-# -------------------------
 
 @app.get("/login", response_class=HTMLResponse)
 async def login_page(request: Request):
@@ -90,26 +84,20 @@ async def login_page(request: Request):
         return RedirectResponse("/")
     return templates.TemplateResponse("login.html", {"request": request, "user_token": user_token})
 
-# Remove separate signup endpoint to use a single auth page.
-# @app.get("/signup", response_class=HTMLResponse)
-# async def signup_page(request: Request):
-#     return templates.TemplateResponse("signup.html", {"request": request})
-
 @app.get("/logout", response_class=RedirectResponse)
 async def logout(request: Request):
     response = RedirectResponse(url="/", status_code=status.HTTP_302_FOUND)
     response.delete_cookie("token")
     return response
 
-# -------------------------
 # Driver Endpoints
-# -------------------------
 
 @app.get("/drivers", response_class=HTMLResponse)
 async def list_drivers(request: Request):
-    # Retrieve and validate token
+
     id_token = request.cookies.get("token")
     user_token = validate_firebase_token(id_token)
+
     if user_token:
         user_doc = get_user(user_token)
         user_info = user_doc.get().to_dict()
@@ -340,9 +328,7 @@ async def delete_driver(driver_id: str, request: Request):
     driver_ref.delete()
     return RedirectResponse(url="/drivers", status_code=status.HTTP_302_FOUND)
 
-# -------------------------
 # Team Endpoints
-# -------------------------
 
 @app.get("/teams", response_class=HTMLResponse)
 async def list_teams(request: Request):
@@ -581,9 +567,7 @@ async def delete_team(team_id: str, request: Request):
     team_ref.delete()
     return RedirectResponse(url="/teams", status_code=status.HTTP_302_FOUND)
 
-# -------------------------
 # Comparison Endpoints
-# -------------------------
 
 @app.get("/compare/drivers", response_class=HTMLResponse)
 async def compare_drivers_form(request: Request):
@@ -630,7 +614,7 @@ async def compare_drivers(
     for stat in stats:
         value1 = driver1.get(stat, 0)
         value2 = driver2.get(stat, 0)
-        # For age, lower is better; for others, higher is better.
+        
         if stat == "age":
             if value1 < value2:
                 better = "driver1"
@@ -696,7 +680,7 @@ async def compare_teams(
     for stat in stats:
         value1 = team1.get(stat, 0)
         value2 = team2.get(stat, 0)
-        # For teams, lower is better for year_founded and finishing_position_previous_season; higher is better for others.
+
         if stat in ["year_founded", "finishing_position_previous_season"]:
             if value1 < value2:
                 better = "team1"
@@ -717,7 +701,6 @@ async def compare_teams(
 
 
 def seed_sample_data():
-    # Seed sample drivers if none exist
     drivers_ref = firestore_db.collection("drivers")
     if not any(drivers_ref.stream()):
         sample_drivers = [
@@ -791,7 +774,6 @@ def seed_sample_data():
         for driver in sample_drivers:
             firestore_db.collection("drivers").add(driver)
 
-    # Seed sample teams if none exist
     teams_ref = firestore_db.collection("teams")
     if not any(teams_ref.stream()):
         sample_teams = [
