@@ -107,28 +107,48 @@ async def logout(request: Request):
 
 @app.get("/drivers", response_class=HTMLResponse)
 async def list_drivers(request: Request):
+    # Retrieve and validate token
+    id_token = request.cookies.get("token")
+    user_token = validate_firebase_token(id_token)
+    if user_token:
+        user_doc = get_user(user_token)
+        user_info = user_doc.get().to_dict()
+        user_token["email"] = user_info.get("email", "Unknown")
+    else:
+        user_token = None
+
     drivers_ref = firestore_db.collection("drivers")
     drivers = []
     for doc in drivers_ref.stream():
         d = doc.to_dict()
         d["id"] = doc.id
         drivers.append(d)
-    print("DEBUG: Found {} drivers".format(len(drivers)))
-    return templates.TemplateResponse("drivers_list.html", {"request": request, "drivers": drivers})
+    
+    return templates.TemplateResponse("drivers_list.html", {"request": request,"drivers": drivers,"user_token": user_token})
 
 @app.get("/drivers/query", response_class=HTMLResponse)
 async def query_drivers_form(request: Request):
-    print("DEBUG: /drivers/query GET endpoint accessed")
-    return templates.TemplateResponse("query_drivers.html", {"request": request})
+    id_token = request.cookies.get("token")
+    user_token = validate_firebase_token(id_token)
+    if user_token:
+        user_doc = get_user(user_token)
+        user_info = user_doc.get().to_dict()
+        user_token["email"] = user_info.get("email", "Unknown")
+    else:
+        user_token = None
+    return templates.TemplateResponse("query_drivers.html", {"request": request, "user_token": user_token})
 
 @app.post("/drivers/query", response_class=HTMLResponse)
-async def query_drivers(
-    request: Request,
-    attribute: str = Form(...),
-    operator: str = Form(...),
-    value: str = Form(...)
-):
-    print("DEBUG: /drivers/query POST endpoint accessed")
+async def query_drivers(request: Request, attribute: str = Form(...), operator: str = Form(...), value: str = Form(...)):
+    id_token = request.cookies.get("token")
+    user_token = validate_firebase_token(id_token)
+    if user_token:
+        user_doc = get_user(user_token)
+        user_info = user_doc.get().to_dict()
+        user_token["email"] = user_info.get("email", "Unknown")
+    else:
+        user_token = None
+
     drivers_ref = firestore_db.collection("drivers")
     if attribute in ["age", "total_pole_positions", "total_race_wins", "total_points_scored", "total_world_titles", "total_fastest_laps"]:
         try:
@@ -141,18 +161,24 @@ async def query_drivers(
         d = doc.to_dict()
         d["id"] = doc.id
         drivers.append(d)
-    print("DEBUG: Query returned {} drivers".format(len(drivers)))
+    context = {"request": request, "drivers": drivers, "user_token": user_token}
     if not drivers:
-        return templates.TemplateResponse("drivers_list.html", {
-            "request": request,
-            "drivers": drivers,
-            "message": "No drivers found matching your query."
-        })
-    return templates.TemplateResponse("drivers_list.html", {"request": request, "drivers": drivers})
+        context["message"] = "No drivers found matching your query."
+    return templates.TemplateResponse("drivers_list.html", context)
+
 
 @app.get("/drivers/add", response_class=HTMLResponse)
 async def add_driver_form(request: Request):
-    return templates.TemplateResponse("add_driver.html", {"request": request})
+    id_token = request.cookies.get("token")
+    user_token = validate_firebase_token(id_token)
+    if user_token:
+        user_doc = get_user(user_token)
+        user_info = user_doc.get().to_dict()
+        user_token["email"] = user_info.get("email", "Unknown")
+    else:
+        user_token = None
+    return templates.TemplateResponse("add_driver.html", {"request": request, "user_token": user_token})
+
 
 @app.post("/drivers/add", response_class=RedirectResponse)
 async def add_driver(
@@ -204,21 +230,39 @@ async def add_driver(
 
 @app.get("/drivers/{driver_id}", response_class=HTMLResponse)
 async def driver_details(request: Request, driver_id: str):
+    id_token = request.cookies.get("token")
+    user_token = validate_firebase_token(id_token)
+    if user_token:
+        user_doc = get_user(user_token)
+        user_info = user_doc.get().to_dict()
+        user_token["email"] = user_info.get("email", "Unknown")
+    else:
+        user_token = None
     doc = firestore_db.collection("drivers").document(driver_id).get()
     if not doc.exists:
         return HTMLResponse("Driver not found", status_code=404)
     driver = doc.to_dict()
     driver["id"] = driver_id
-    return templates.TemplateResponse("driver_details.html", {"request": request, "driver": driver})
+    return templates.TemplateResponse("driver_details.html", {"request": request, "driver": driver, "user_token": user_token})
+
 
 @app.get("/drivers/edit/{driver_id}", response_class=HTMLResponse)
 async def edit_driver_form(request: Request, driver_id: str):
+    id_token = request.cookies.get("token")
+    user_token = validate_firebase_token(id_token)
+    if user_token:
+        user_doc = get_user(user_token)
+        user_info = user_doc.get().to_dict()
+        user_token["email"] = user_info.get("email", "Unknown")
+    else:
+        user_token = None
     doc = firestore_db.collection("drivers").document(driver_id).get()
     if not doc.exists:
         return HTMLResponse("Driver not found", status_code=404)
     driver = doc.to_dict()
     driver["id"] = driver_id
-    return templates.TemplateResponse("edit_driver.html", {"request": request, "driver": driver})
+    return templates.TemplateResponse("edit_driver.html", {"request": request, "driver": driver, "user_token": user_token})
+
 
 @app.post("/drivers/edit/{driver_id}", response_class=RedirectResponse)
 async def edit_driver(
@@ -302,25 +346,47 @@ async def delete_driver(driver_id: str, request: Request):
 
 @app.get("/teams", response_class=HTMLResponse)
 async def list_teams(request: Request):
+    id_token = request.cookies.get("token")
+    user_token = validate_firebase_token(id_token)
+    if user_token:
+        user_doc = get_user(user_token)
+        user_info = user_doc.get().to_dict()
+        user_token["email"] = user_info.get("email", "Unknown")
+    else:
+        user_token = None
     teams_ref = firestore_db.collection("teams")
     teams = []
     for doc in teams_ref.stream():
         t = doc.to_dict()
         t["id"] = doc.id
         teams.append(t)
-    return templates.TemplateResponse("teams_list.html", {"request": request, "teams": teams})
+    return templates.TemplateResponse("teams_list.html", {"request": request, "teams": teams, "user_token": user_token})
+
 
 @app.get("/teams/query", response_class=HTMLResponse)
 async def query_teams_form(request: Request):
-    return templates.TemplateResponse("query_teams.html", {"request": request})
+    id_token = request.cookies.get("token")
+    user_token = validate_firebase_token(id_token)
+    if user_token:
+        user_doc = get_user(user_token)
+        user_info = user_doc.get().to_dict()
+        user_token["email"] = user_info.get("email", "Unknown")
+    else:
+        user_token = None
+    return templates.TemplateResponse("query_teams.html", {"request": request, "user_token": user_token})
+
 
 @app.post("/teams/query", response_class=HTMLResponse)
-async def query_teams(
-    request: Request,
-    attribute: str = Form(...),
-    operator: str = Form(...),
-    value: str = Form(...)
-):
+async def query_teams(request: Request, attribute: str = Form(...), operator: str = Form(...), value: str = Form(...)):
+    id_token = request.cookies.get("token")
+    user_token = validate_firebase_token(id_token)
+    if user_token:
+        user_doc = get_user(user_token)
+        user_info = user_doc.get().to_dict()
+        user_token["email"] = user_info.get("email", "Unknown")
+    else:
+        user_token = None
+
     teams_ref = firestore_db.collection("teams")
     if attribute in ["year_founded", "total_pole_positions", "total_race_wins", "total_constructor_titles", "finishing_position_previous_season"]:
         try:
@@ -333,18 +399,24 @@ async def query_teams(
         t = doc.to_dict()
         t["id"] = doc.id
         teams.append(t)
-    print("DEBUG: Query returned {} teams".format(len(teams)))
+    context = {"request": request, "teams": teams, "user_token": user_token}
     if not teams:
-        return templates.TemplateResponse("teams_list.html", {
-            "request": request,
-            "teams": teams,
-            "message": "No teams found matching your query."
-        })
-    return templates.TemplateResponse("teams_list.html", {"request": request, "teams": teams})
+        context["message"] = "No teams found matching your query."
+    return templates.TemplateResponse("teams_list.html", context)
+
 
 @app.get("/teams/add", response_class=HTMLResponse)
 async def add_team_form(request: Request):
-    return templates.TemplateResponse("add_team.html", {"request": request})
+    id_token = request.cookies.get("token")
+    user_token = validate_firebase_token(id_token)
+    if user_token:
+        user_doc = get_user(user_token)
+        user_info = user_doc.get().to_dict()
+        user_token["email"] = user_info.get("email", "Unknown")
+    else:
+        user_token = None
+    return templates.TemplateResponse("add_team.html", {"request": request, "user_token": user_token})
+
 
 @app.post("/teams/add", response_class=RedirectResponse)
 async def add_team(
@@ -396,6 +468,14 @@ async def add_team(
 
 @app.get("/teams/{team_id}", response_class=HTMLResponse)
 async def team_details(request: Request, team_id: str):
+    id_token = request.cookies.get("token")
+    user_token = validate_firebase_token(id_token)
+    if user_token:
+        user_doc = get_user(user_token)
+        user_info = user_doc.get().to_dict()
+        user_token["email"] = user_info.get("email", "Unknown")
+    else:
+        user_token = None
     doc = firestore_db.collection("teams").document(team_id).get()
     if not doc.exists:
         return HTMLResponse("Team not found", status_code=404)
@@ -408,21 +488,26 @@ async def team_details(request: Request, team_id: str):
         d = doc.to_dict()
         d["id"] = doc.id
         drivers.append(d)
+    return templates.TemplateResponse("team_details.html", {"request": request, "team": team, "drivers": drivers, "user_token": user_token})
 
-    return templates.TemplateResponse("team_details.html", {
-        "request": request,
-        "team": team,
-        "drivers": drivers
-    })
 
 @app.get("/teams/edit/{team_id}", response_class=HTMLResponse)
 async def edit_team_form(request: Request, team_id: str):
+    id_token = request.cookies.get("token")
+    user_token = validate_firebase_token(id_token)
+    if user_token:
+        user_doc = get_user(user_token)
+        user_info = user_doc.get().to_dict()
+        user_token["email"] = user_info.get("email", "Unknown")
+    else:
+        user_token = None
     doc = firestore_db.collection("teams").document(team_id).get()
     if not doc.exists:
         return HTMLResponse("Team not found", status_code=404)
     team = doc.to_dict()
     team["id"] = team_id
-    return templates.TemplateResponse("edit_team.html", {"request": request, "team": team})
+    return templates.TemplateResponse("edit_team.html", {"request": request, "team": team, "user_token": user_token})
+
 
 @app.post("/teams/edit/{team_id}", response_class=RedirectResponse)
 async def edit_team(
@@ -502,9 +587,18 @@ async def delete_team(team_id: str, request: Request):
 
 @app.get("/compare/drivers", response_class=HTMLResponse)
 async def compare_drivers_form(request: Request):
+    id_token = request.cookies.get("token")
+    user_token = validate_firebase_token(id_token)
+    if user_token:
+        user_doc = get_user(user_token)
+        user_info = user_doc.get().to_dict()
+        user_token["email"] = user_info.get("email", "Unknown")
+    else:
+        user_token = None
+
     drivers_ref = firestore_db.collection("drivers")
     drivers = [doc.to_dict() | {"id": doc.id} for doc in drivers_ref.stream()]
-    return templates.TemplateResponse("compare_drivers_form.html", {"request": request, "drivers": drivers})
+    return templates.TemplateResponse("compare_drivers_form.html", {"request": request,"drivers": drivers,"user_token": user_token})
 
 @app.post("/compare/drivers", response_class=HTMLResponse)
 async def compare_drivers(
@@ -515,6 +609,15 @@ async def compare_drivers(
     if driver1_id == driver2_id:
         return HTMLResponse("Please select two different drivers for comparison.", status_code=400)
     
+    id_token = request.cookies.get("token")
+    user_token = validate_firebase_token(id_token)
+    if user_token:
+        user_doc = get_user(user_token)
+        user_info = user_doc.get().to_dict()
+        user_token["email"] = user_info.get("email", "Unknown")
+    else:
+        user_token = None
+
     doc1 = firestore_db.collection("drivers").document(driver1_id).get()
     doc2 = firestore_db.collection("drivers").document(driver2_id).get()
     if not doc1.exists or not doc2.exists:
@@ -527,6 +630,7 @@ async def compare_drivers(
     for stat in stats:
         value1 = driver1.get(stat, 0)
         value2 = driver2.get(stat, 0)
+        # For age, lower is better; for others, higher is better.
         if stat == "age":
             if value1 < value2:
                 better = "driver1"
@@ -541,25 +645,26 @@ async def compare_drivers(
                 better = "driver2"
             else:
                 better = "equal"
-        comparison.append({
-            "stat": stat,
-            "driver1_value": value1,
-            "driver2_value": value2,
-            "better": better
-        })
+        comparison.append({"stat": stat,"driver1_value": value1,"driver2_value": value2,"better": better})
 
-    return templates.TemplateResponse("compare_drivers.html", {
-        "request": request,
-        "driver1": driver1,
-        "driver2": driver2,
-        "comparison": comparison
-    })
+    return templates.TemplateResponse("compare_drivers.html", {"request": request,"driver1": driver1,"driver2": driver2,"comparison": comparison,"user_token": user_token})
+
 
 @app.get("/compare/teams", response_class=HTMLResponse)
 async def compare_teams_form(request: Request):
+    id_token = request.cookies.get("token")
+    user_token = validate_firebase_token(id_token)
+    if user_token:
+        user_doc = get_user(user_token)
+        user_info = user_doc.get().to_dict()
+        user_token["email"] = user_info.get("email", "Unknown")
+    else:
+        user_token = None
+
     teams_ref = firestore_db.collection("teams")
     teams = [doc.to_dict() | {"id": doc.id} for doc in teams_ref.stream()]
-    return templates.TemplateResponse("compare_teams_form.html", {"request": request, "teams": teams})
+    return templates.TemplateResponse("compare_teams_form.html", {"request": request,"teams": teams,"user_token": user_token})
+
 
 @app.post("/compare/teams", response_class=HTMLResponse)
 async def compare_teams(
@@ -570,6 +675,15 @@ async def compare_teams(
     if team1_id == team2_id:
         return HTMLResponse("Please select two different teams for comparison.", status_code=400)
     
+    id_token = request.cookies.get("token")
+    user_token = validate_firebase_token(id_token)
+    if user_token:
+        user_doc = get_user(user_token)
+        user_info = user_doc.get().to_dict()
+        user_token["email"] = user_info.get("email", "Unknown")
+    else:
+        user_token = None
+
     doc1 = firestore_db.collection("teams").document(team1_id).get()
     doc2 = firestore_db.collection("teams").document(team2_id).get()
     if not doc1.exists or not doc2.exists:
@@ -582,6 +696,7 @@ async def compare_teams(
     for stat in stats:
         value1 = team1.get(stat, 0)
         value2 = team2.get(stat, 0)
+        # For teams, lower is better for year_founded and finishing_position_previous_season; higher is better for others.
         if stat in ["year_founded", "finishing_position_previous_season"]:
             if value1 < value2:
                 better = "team1"
@@ -596,18 +711,10 @@ async def compare_teams(
                 better = "team2"
             else:
                 better = "equal"
-        comparison.append({
-            "stat": stat,
-            "team1_value": value1,
-            "team2_value": value2,
-            "better": better
-        })
-    return templates.TemplateResponse("compare_teams.html", {
-        "request": request,
-        "team1": team1,
-        "team2": team2,
-        "comparison": comparison
-    })
+        comparison.append({"stat": stat,"team1_value": value1,"team2_value": value2,"better": better})
+
+    return templates.TemplateResponse("compare_teams.html", {"request": request,"team1": team1,"team2": team2,"comparison": comparison,"user_token": user_token})
+
 
 def seed_sample_data():
     # Seed sample drivers if none exist
