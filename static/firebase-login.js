@@ -4,13 +4,13 @@ import { initializeApp } from "https://www.gstatic.com/firebasejs/9.22.2/firebas
 import { getAuth, createUserWithEmailAndPassword, signInWithEmailAndPassword, signOut } from "https://www.gstatic.com/firebasejs/9.22.2/firebase-auth.js";
 
 const firebaseConfig = {
-    apiKey: "AIzaSyCNS_lAHMliMFBKpyNXlsBoRd6a5GZL_VY",
-    authDomain: "cpa-ass1.firebaseapp.com",
-    projectId: "cpa-ass1",
-    storageBucket: "cpa-ass1.firebasestorage.app",
-    messagingSenderId: "142710503634",
-    appId: "1:142710503634:web:b63a99708cab104290150b"
-};
+    apiKey: "AIzaSyBJ5B4bsYbxrtGDLhDN6HwrvpAaOPn8hCA",
+    authDomain: "assignment01-453218.firebaseapp.com",
+    projectId: "assignment01-453218",
+    storageBucket: "assignment01-453218.firebasestorage.app",
+    messagingSenderId: "564823875928",
+    appId: "1:564823875928:web:d9bfa6d4cc6312652e052d"
+  };
 
 window.addEventListener("load", function() {
     const app = initializeApp(firebaseConfig);
@@ -55,7 +55,7 @@ window.addEventListener("load", function() {
         });
     });
 
-    this.document.getElementById("sign-out").addEventListener('click', function() {
+    document.getElementById("sign-out").addEventListener('click', function() {
         signOut(auth)
         .then((output) => {
             document.cookie = "token=;path=/;SameSite=Strict";
