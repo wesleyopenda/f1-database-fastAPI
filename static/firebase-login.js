@@ -23,17 +23,17 @@ window.addEventListener("load", function() {
         const password = document.getElementById("password").value;
 
         createUserWithEmailAndPassword(auth, email, password)
-        .then((userCredential) => {
-            const user = userCredential.user;
+            .then((userCredential) => {
+                const user = userCredential.user;
 
-            user.getIdToken().then((token) => {
-                document.cookie = "token=" + token + ";path=/;SameSite=Strict";
-                window.location = "/";
+                user.getIdToken().then((token) => {
+                    document.cookie = "token=" + token + ";path=/;SameSite=Strict";
+                    window.location = "/";
+                });
+            })
+            .catch((error) => {
+                console.log(error.code + error.message);
             });
-        })
-        .catch((error) => {
-            console.log(error.code + error.message);
-        });
     });
 
     document.getElementById("login").addEventListener('click', function() {
@@ -41,18 +41,18 @@ window.addEventListener("load", function() {
         const password = document.getElementById("password").value;
 
         signInWithEmailAndPassword(auth, email, password)
-        .then((userCredential) => {
-            const user = userCredential.user;
-            console.log("logged in");
+            .then((userCredential) => {
+                const user = userCredential.user;
+                console.log("logged in");
 
-            user.getIdToken().then((token) => {
-                document.cookie = "token=" + token + ";path=/;SameSite=Strict";
-                window.location = "/";
+                user.getIdToken().then((token) => {
+                    document.cookie = "token=" + token + ";path=/;SameSite=Strict";
+                    window.location = "/";
+                });
+            })
+            .catch((error) => {
+                console.log(error.code + error.message);
             });
-        })
-        .catch((error) => {
-            console.log(error.code + error.message);
-        });
     });
 
     document.getElementById("sign-out").addEventListener('click', function() {
@@ -62,18 +62,16 @@ window.addEventListener("load", function() {
             window.location = "/";
         });
     });
-});
-
 function updateUI(cookie) {
-   var token = parseCookieToken(cookie);
-   
-   if(token.length > 0) {
-    document.getElementById("login-box").hidden = true;
-    document.getElementById("sign-out").hidden = false;
-   } else {
-    document.getElementById("login-box").hidden = false;
-    document.getElementById("sign-out").hidden = true;
-   }
+    var token = parseCookieToken(cookie);
+        
+    if(token.length > 0) {
+        document.getElementById("login-box").hidden = true;
+        document.getElementById("sign-out").hidden = false;
+    } else {
+        document.getElementById("login-box").hidden = false;
+        document.getElementById("sign-out").hidden = true;
+    }
 };
 
 function parseCookieToken(cookie) {
@@ -87,3 +85,5 @@ function parseCookieToken(cookie) {
 
     return "";
 };
+});
+

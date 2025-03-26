@@ -2,7 +2,7 @@ from fastapi import FastAPI, Request, Form, UploadFile, File
 from fastapi.responses import HTMLResponse, RedirectResponse, Response
 from fastapi.staticfiles import StaticFiles
 from fastapi.templating import Jinja2Templates
-import google.oauth2.id_token;
+import google.oauth2.id_token
 from google.auth.transport import requests as google_requests
 from google.cloud import firestore, storage
 import starlette.status as status
@@ -11,45 +11,47 @@ import local_constants
 app = FastAPI()
 
 firestore_db = firestore.Client()
-
 firebase_request_adapter = google_requests.Request()
 
-app.mount('/static', StaticFiles(directory = 'static'), name = 'static')
-templates = Jinja2Templates(directory = "templates")
+app.mount('/static', StaticFiles(directory='static'), name='static')
+templates = Jinja2Templates(directory="templates")
+
+def get_user(user_token):
+    doc_ref = firestore_db.collection('users').document(user_token['user_id'])
+    doc = doc_ref.get()
+    if not doc.exists:
+        # Create default user data if not present, using the token's email if available.
+        user_data = {
+            "name": user_token.get("email", "John Doe"),
+            "email": user_token.get("email", "Unknown")
+        }
+        doc_ref.set(user_data)
+    return doc_ref
 
 def validate_firebase_token(id_token: str):
     if not id_token:
         return None
     try:
-        token = google.oauth2.id_token.verify_firebase_token(id_token, firebase_request_adapter)
-        return token
+        user_token = google.oauth2.id_token.verify_firebase_token(id_token, firebase_request_adapter)
+        return user_token
     except ValueError as err:
         print(f"Token validation error: {err}")
         return None
-    
-def get_user(user_token):
-    doc_ref = firestore_db.collection('users').document(user_token['user_id'])
-    doc = doc_ref.get()
-    if not doc.exists:
-        # Create default user data if not present
-        user_data = {
-            "name": "John Doe",
-            # Additional fields can be added here
-        }
-        doc_ref.set(user_data)
-    return doc_ref
 
 @app.get("/", response_class=HTMLResponse)
-async def home(request: Request):
+async def root(request: Request):
     id_token = request.cookies.get("token")
     error_message = ""
     user_token = validate_firebase_token(id_token)
-    user_info = None
+    user_info = {}
+
     if user_token:
         user_doc = get_user(user_token)
         user_info = user_doc.get().to_dict()
+        # Ensure that user_token includes an 'email' key using the Firestore user document.
+        user_token["email"] = user_info.get("email", "Unknown")
 
-    # Query pre-installed drivers from Firestore without using union operator
+    # Query pre-installed drivers from Firestore
     drivers_ref = firestore_db.collection("drivers")
     drivers = []
     for doc in drivers_ref.stream():
@@ -65,9 +67,16 @@ async def home(request: Request):
         t["id"] = doc.id
         teams.append(t)
 
+    print(f"DEBUG: Found {len(drivers)} drivers and {len(teams)} teams")
 
-    return templates.TemplateResponse("main.html", {"request": request,"user_token": user_token,"error_message": error_message,"user_info": user_info,"drivers": drivers,"teams": teams})
-
+    return templates.TemplateResponse("main.html", {
+        "request": request,
+        "user_token": user_token,
+        "error_message": error_message,
+        "user_info": user_info,
+        "drivers": drivers,
+        "teams": teams
+    })
 
 # -------------------------
 # Authentication Endpoints
@@ -75,19 +84,22 @@ async def home(request: Request):
 
 @app.get("/login", response_class=HTMLResponse)
 async def login_page(request: Request):
-    return templates.TemplateResponse("login.html", {"request": request})
+    id_token = request.cookies.get("token")
+    user_token = validate_firebase_token(id_token)
+    if user_token:
+        return RedirectResponse("/")
+    return templates.TemplateResponse("login.html", {"request": request, "user_token": user_token})
 
-@app.get("/signup", response_class=HTMLResponse)
-async def signup_page(request: Request):
-    return templates.TemplateResponse("signup.html", {"request": request})
+# Remove separate signup endpoint to use a single auth page.
+# @app.get("/signup", response_class=HTMLResponse)
+# async def signup_page(request: Request):
+#     return templates.TemplateResponse("signup.html", {"request": request})
 
 @app.get("/logout", response_class=RedirectResponse)
 async def logout(request: Request):
-    # Create a redirect response to the home page and delete the "token" cookie.
     response = RedirectResponse(url="/", status_code=status.HTTP_302_FOUND)
     response.delete_cookie("token")
     return response
-
 
 # -------------------------
 # Driver Endpoints
@@ -104,15 +116,9 @@ async def list_drivers(request: Request):
     print("DEBUG: Found {} drivers".format(len(drivers)))
     return templates.TemplateResponse("drivers_list.html", {"request": request, "drivers": drivers})
 
-
-# -------------------------
-# Driver Query Endpoints
-# -------------------------
-
 @app.get("/drivers/query", response_class=HTMLResponse)
 async def query_drivers_form(request: Request):
     print("DEBUG: /drivers/query GET endpoint accessed")
-    # Render a form for filtering drivers.
     return templates.TemplateResponse("query_drivers.html", {"request": request})
 
 @app.post("/drivers/query", response_class=HTMLResponse)
@@ -124,7 +130,6 @@ async def query_drivers(
 ):
     print("DEBUG: /drivers/query POST endpoint accessed")
     drivers_ref = firestore_db.collection("drivers")
-    # If the attribute is numeric, convert the value to int.
     if attribute in ["age", "total_pole_positions", "total_race_wins", "total_points_scored", "total_world_titles", "total_fastest_laps"]:
         try:
             value = int(value)
@@ -137,7 +142,6 @@ async def query_drivers(
         d["id"] = doc.id
         drivers.append(d)
     print("DEBUG: Query returned {} drivers".format(len(drivers)))
-    # If no drivers are found, pass a message to the list template.
     if not drivers:
         return templates.TemplateResponse("drivers_list.html", {
             "request": request,
@@ -145,7 +149,6 @@ async def query_drivers(
             "message": "No drivers found matching your query."
         })
     return templates.TemplateResponse("drivers_list.html", {"request": request, "drivers": drivers})
-
 
 @app.get("/drivers/add", response_class=HTMLResponse)
 async def add_driver_form(request: Request):
@@ -164,20 +167,17 @@ async def add_driver(
     team: str = Form(...),
     image: UploadFile = File(None)
 ):
-    # Ensure user is logged in
     id_token = request.cookies.get("token")
     user_token = validate_firebase_token(id_token)
     if not user_token:
         return RedirectResponse(url="/login", status_code=status.HTTP_302_FOUND)
-    
-    # Check for duplicate driver by name (exact match)
+
     existing_drivers = list(firestore_db.collection("drivers").where("name", "==", name).stream())
     if existing_drivers:
         return HTMLResponse("Driver with the same name already exists.", status_code=400)
-    
-    # Determine image URL: if image uploaded, upload to Cloud Storage; else use placeholder.
+
     if image is not None and image.filename != "":
-        image.file.seek(0)  # Ensure file pointer is at the beginning
+        image.file.seek(0)
         storage_client = storage.Client(project=local_constants.PROJECT_NAME)
         bucket = storage_client.bucket(local_constants.PROJECT_STORAGE_BUCKET)
         blob = bucket.blob(f"drivers/{image.filename}")
@@ -185,9 +185,8 @@ async def add_driver(
         blob.make_public()
         image_url = blob.public_url
     else:
-        
         image_url = "https://storage.googleapis.com/assignment01-453218.appspot.com/placeholder.png"
-    
+
     driver_data = {
         "name": name,
         "age": age,
@@ -199,10 +198,9 @@ async def add_driver(
         "team": team,
         "image_url": image_url,
     }
-    
+
     firestore_db.collection("drivers").add(driver_data)
     return RedirectResponse(url="/drivers", status_code=status.HTTP_302_FOUND)
-
 
 @app.get("/drivers/{driver_id}", response_class=HTMLResponse)
 async def driver_details(request: Request, driver_id: str):
@@ -236,13 +234,11 @@ async def edit_driver(
     team: str = Form(...),
     image: UploadFile = File(None)
 ):
-    # Check if the user is logged in
     id_token = request.cookies.get("token")
     user_token = validate_firebase_token(id_token)
     if not user_token:
         return RedirectResponse(url="/login", status_code=status.HTTP_302_FOUND)
-    
-    # Check for duplicate driver names (exclude the current driver)
+
     duplicate_drivers = [
         doc for doc in firestore_db.collection("drivers").where("name", "==", name).stream()
         if doc.id != driver_id
@@ -250,7 +246,6 @@ async def edit_driver(
     if duplicate_drivers:
         return HTMLResponse("Driver with the same name already exists.", status_code=400)
 
-    # Prepare the data to update
     driver_data = {
         "name": name,
         "age": age,
@@ -262,40 +257,33 @@ async def edit_driver(
         "team": team,
     }
 
-    # If a new image is uploaded, upload it and update the image_url field.
     if image is not None and image.filename != "":
-        image.file.seek(0)  # Ensure the file pointer is at the beginning
+        image.file.seek(0)
         storage_client = storage.Client(project=local_constants.PROJECT_NAME)
         bucket = storage_client.bucket(local_constants.PROJECT_STORAGE_BUCKET)
         blob = bucket.blob(f"drivers/{image.filename}")
         blob.upload_from_file(image.file, content_type=image.content_type)
         blob.make_public()
         driver_data["image_url"] = blob.public_url
-    # Otherwise, do not modify the image_url field.
 
     firestore_db.collection("drivers").document(driver_id).update(driver_data)
     return RedirectResponse(url=f"/drivers/{driver_id}", status_code=status.HTTP_302_FOUND)
 
-
 @app.post("/drivers/delete/{driver_id}", response_class=RedirectResponse)
 async def delete_driver(driver_id: str, request: Request):
-    # Check if the user is logged in
     id_token = request.cookies.get("token")
     user_token = validate_firebase_token(id_token)
     if not user_token:
         return RedirectResponse(url="/login", status_code=status.HTTP_302_FOUND)
     
-    # Retrieve the driver document
     driver_ref = firestore_db.collection("drivers").document(driver_id)
     driver_doc = driver_ref.get()
     if driver_doc.exists:
         driver = driver_doc.to_dict()
         image_url = driver.get("image_url")
-        # If an image exists and it's not the placeholder, delete it from Cloud Storage
         if image_url and "placeholder_driver.jpg" not in image_url:
             from urllib.parse import urlparse
             parsed_url = urlparse(image_url)
-            # The path starts with '/', so remove it to get the correct blob path.
             file_path = parsed_url.path.lstrip('/')
             try:
                 storage_client = storage.Client(project=local_constants.PROJECT_NAME)
@@ -305,10 +293,8 @@ async def delete_driver(driver_id: str, request: Request):
                 print("Deleted image:", image_url)
             except Exception as e:
                 print("Error deleting image:", e)
-    # Delete the Firestore document for the driver
     driver_ref.delete()
     return RedirectResponse(url="/drivers", status_code=status.HTTP_302_FOUND)
-
 
 # -------------------------
 # Team Endpoints
@@ -324,12 +310,6 @@ async def list_teams(request: Request):
         teams.append(t)
     return templates.TemplateResponse("teams_list.html", {"request": request, "teams": teams})
 
-
-
-# -------------------------
-# Team Query Endpoints
-# -------------------------
-
 @app.get("/teams/query", response_class=HTMLResponse)
 async def query_teams_form(request: Request):
     return templates.TemplateResponse("query_teams.html", {"request": request})
@@ -342,7 +322,6 @@ async def query_teams(
     value: str = Form(...)
 ):
     teams_ref = firestore_db.collection("teams")
-    # If the attribute is numeric, convert the value to int.
     if attribute in ["year_founded", "total_pole_positions", "total_race_wins", "total_constructor_titles", "finishing_position_previous_season"]:
         try:
             value = int(value)
@@ -363,11 +342,9 @@ async def query_teams(
         })
     return templates.TemplateResponse("teams_list.html", {"request": request, "teams": teams})
 
-
 @app.get("/teams/add", response_class=HTMLResponse)
 async def add_team_form(request: Request):
     return templates.TemplateResponse("add_team.html", {"request": request})
-
 
 @app.post("/teams/add", response_class=RedirectResponse)
 async def add_team(
@@ -380,28 +357,28 @@ async def add_team(
     finishing_position_previous_season: int = Form(...),
     logo: UploadFile = File(None)
 ):
-    # Ensure user is logged in
     id_token = request.cookies.get("token")
     user_token = validate_firebase_token(id_token)
     if not user_token:
         return RedirectResponse(url="/login", status_code=status.HTTP_302_FOUND)
     
-    # Check for duplicate team by name (exact match)
     existing_teams = list(firestore_db.collection("teams").where("name", "==", name).stream())
     if existing_teams:
         return HTMLResponse("Team with the same name already exists.", status_code=400)
     
-    # Determine logo URL: if a logo is uploaded, use it; else use a placeholder.
     if logo is not None and logo.filename != "":
-        logo.file.seek(0)
-        storage_client = storage.Client(project=local_constants.PROJECT_NAME)
-        bucket = storage_client.bucket(local_constants.PROJECT_STORAGE_BUCKET)
-        blob = bucket.blob(f"teams/{logo.filename}")
-        blob.upload_from_file(logo.file, content_type=logo.content_type)
-        blob.make_public()
-        logo_url = blob.public_url
+        try:
+            logo.file.seek(0)
+            storage_client = storage.Client(project=local_constants.PROJECT_NAME)
+            bucket = storage_client.bucket(local_constants.PROJECT_STORAGE_BUCKET)
+            blob = bucket.blob(f"teams/{logo.filename}")
+            blob.upload_from_file(logo.file, content_type=logo.content_type)
+            blob.make_public()
+            logo_url = blob.public_url
+        except Exception as e:
+            print("Error uploading logo:", e)
+            return HTMLResponse("Error uploading logo.", status_code=500)
     else:
-    
         logo_url = "https://storage.googleapis.com/assignment01-453218.appspot.com/placeholder-team.png"
     
     team_data = {
@@ -417,7 +394,6 @@ async def add_team(
     firestore_db.collection("teams").add(team_data)
     return RedirectResponse(url="/teams", status_code=status.HTTP_302_FOUND)
 
-
 @app.get("/teams/{team_id}", response_class=HTMLResponse)
 async def team_details(request: Request, team_id: str):
     doc = firestore_db.collection("teams").document(team_id).get()
@@ -426,7 +402,6 @@ async def team_details(request: Request, team_id: str):
     team = doc.to_dict()
     team["id"] = team_id
 
-    # Query drivers associated with this team. We assume driver documents have a "team" field.
     drivers_ref = firestore_db.collection("drivers").where("team", "==", team["name"])
     drivers = []
     for doc in drivers_ref.stream():
@@ -437,7 +412,7 @@ async def team_details(request: Request, team_id: str):
     return templates.TemplateResponse("team_details.html", {
         "request": request,
         "team": team,
-        "drivers": drivers  # List of drivers for this team
+        "drivers": drivers
     })
 
 @app.get("/teams/edit/{team_id}", response_class=HTMLResponse)
@@ -461,13 +436,11 @@ async def edit_team(
     finishing_position_previous_season: int = Form(...),
     logo: UploadFile = File(None)
 ):
-    # Check if the user is logged in
     id_token = request.cookies.get("token")
     user_token = validate_firebase_token(id_token)
     if not user_token:
         return RedirectResponse(url="/login", status_code=status.HTTP_302_FOUND)
     
-    # Check for duplicate team names (exclude the current team)
     duplicate_teams = [
         doc for doc in firestore_db.collection("teams").where("name", "==", name).stream()
         if doc.id != team_id
@@ -475,7 +448,6 @@ async def edit_team(
     if duplicate_teams:
         return HTMLResponse("Team with the same name already exists.", status_code=400)
 
-    # Prepare the data to update
     team_data = {
         "name": name,
         "year_founded": year_founded,
@@ -485,7 +457,6 @@ async def edit_team(
         "finishing_position_previous_season": finishing_position_previous_season,
     }
 
-    # If a new logo is uploaded, upload it and update the logo_url field.
     if logo is not None and logo.filename != "":
         logo.file.seek(0)
         storage_client = storage.Client(project=local_constants.PROJECT_NAME)
@@ -494,27 +465,22 @@ async def edit_team(
         blob.upload_from_file(logo.file, content_type=logo.content_type)
         blob.make_public()
         team_data["logo_url"] = blob.public_url
-    # Otherwise, do not modify the logo_url field.
 
     firestore_db.collection("teams").document(team_id).update(team_data)
     return RedirectResponse(url=f"/teams/{team_id}", status_code=status.HTTP_302_FOUND)
 
-
 @app.post("/teams/delete/{team_id}", response_class=RedirectResponse)
 async def delete_team(team_id: str, request: Request):
-    # Check if the user is logged in
     id_token = request.cookies.get("token")
     user_token = validate_firebase_token(id_token)
     if not user_token:
         return RedirectResponse(url="/login", status_code=status.HTTP_302_FOUND)
     
-    # Retrieve the team document
     team_ref = firestore_db.collection("teams").document(team_id)
     team_doc = team_ref.get()
     if team_doc.exists:
         team = team_doc.to_dict()
         logo_url = team.get("logo_url")
-        # If a logo exists and it's not the placeholder, delete it from Cloud Storage
         if logo_url and "placeholder_team.jpg" not in logo_url:
             from urllib.parse import urlparse
             parsed_url = urlparse(logo_url)
@@ -527,21 +493,15 @@ async def delete_team(team_id: str, request: Request):
                 print("Deleted logo:", logo_url)
             except Exception as e:
                 print("Error deleting logo:", e)
-    # Delete the Firestore document for the team
     team_ref.delete()
     return RedirectResponse(url="/teams", status_code=status.HTTP_302_FOUND)
-
-
 
 # -------------------------
 # Comparison Endpoints
 # -------------------------
 
-# Driver Comparison
-
 @app.get("/compare/drivers", response_class=HTMLResponse)
 async def compare_drivers_form(request: Request):
-    # Get list of drivers for dropdowns
     drivers_ref = firestore_db.collection("drivers")
     drivers = [doc.to_dict() | {"id": doc.id} for doc in drivers_ref.stream()]
     return templates.TemplateResponse("compare_drivers_form.html", {"request": request, "drivers": drivers})
@@ -552,16 +512,13 @@ async def compare_drivers(
     driver1_id: str = Form(...),
     driver2_id: str = Form(...)
 ):
-    # Ensure that two different drivers are selected.
     if driver1_id == driver2_id:
         return HTMLResponse("Please select two different drivers for comparison.", status_code=400)
     
-    # Retrieve driver documents
     doc1 = firestore_db.collection("drivers").document(driver1_id).get()
     doc2 = firestore_db.collection("drivers").document(driver2_id).get()
     if not doc1.exists or not doc2.exists:
         return HTMLResponse("One or both drivers not found", status_code=404)
-    
     driver1 = doc1.to_dict()
     driver2 = doc2.to_dict()
 
@@ -598,9 +555,6 @@ async def compare_drivers(
         "comparison": comparison
     })
 
-
-# Team Comparison
-
 @app.get("/compare/teams", response_class=HTMLResponse)
 async def compare_teams_form(request: Request):
     teams_ref = firestore_db.collection("teams")
@@ -613,10 +567,9 @@ async def compare_teams(
     team1_id: str = Form(...),
     team2_id: str = Form(...)
 ):
-    # Ensure that two different teams are selected.
     if team1_id == team2_id:
         return HTMLResponse("Please select two different teams for comparison.", status_code=400)
-
+    
     doc1 = firestore_db.collection("teams").document(team1_id).get()
     doc2 = firestore_db.collection("teams").document(team2_id).get()
     if not doc1.exists or not doc2.exists:
@@ -624,9 +577,6 @@ async def compare_teams(
     team1 = doc1.to_dict()
     team2 = doc2.to_dict()
 
-    # For teams, assume these fields:
-    # year_founded and finishing_position_previous_season: lower is better;
-    # total_pole_positions, total_race_wins, total_constructor_titles: higher is better.
     stats = ["year_founded", "total_pole_positions", "total_race_wins", "total_constructor_titles", "finishing_position_previous_season"]
     comparison = []
     for stat in stats:
@@ -660,6 +610,7 @@ async def compare_teams(
     })
 
 def seed_sample_data():
+    # Seed sample drivers if none exist
     drivers_ref = firestore_db.collection("drivers")
     if not any(drivers_ref.stream()):
         sample_drivers = [
@@ -785,7 +736,6 @@ def seed_sample_data():
         ]
         for team in sample_teams:
             firestore_db.collection("teams").add(team)
-
 
 @app.on_event("startup")
 async def startup_event():
