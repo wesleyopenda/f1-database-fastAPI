@@ -15,3 +15,6 @@ venv/
 
 # do NOT upload
 local_constants.py
+assignment01-453218-710dc37168eb.json
+*firebase-adminsdk*.json
+*service-account*.json
