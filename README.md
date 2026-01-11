@@ -50,7 +50,7 @@ This project is a Formula 1-themed web application built using:
 ## Project Structure
 
 ```
-assignment01/
+project01/
 │
 ├── main.py
 ├── local_constants.py
@@ -83,7 +83,7 @@ assignment01/
 
 ---
 
-## ✅ Requirements
+## Requirements
 
 - Python 3.10+
 - Google Cloud SDK *(optional but useful)*
@@ -133,8 +133,8 @@ pip install -r requirements.txt
 Create a file called **local_constants.py** in the root folder:
 
 ```python
-PROJECT_NAME = "assignment01-453218"
-PROJECT_STORAGE_BUCKET = "assignment01-453218.appspot.com"
+PROJECT_NAME = "project01-453218"
+PROJECT_STORAGE_BUCKET = "project01-453218.appspot.com"
 ```
 
  Your values must match your Firebase/GCP project settings.
@@ -263,3 +263,4 @@ with valid Cloud Storage image URLs
 **Wesley Openda**  
 F1 Database FastAPI Web Application
 
+git
