@@ -1,0 +1,17 @@
+# Python cache
+__pycache__/
+*.pyc
+*.pyo
+*.pyd
+
+# Venv
+venv/
+.venv/
+
+# OS/Editor
+.DS_Store
+.vscode/
+.idea/
+
+# do NOT upload
+local_constants.py
