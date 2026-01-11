@@ -172,7 +172,7 @@ echo $GOOGLE_APPLICATION_CREDENTIALS
 
 ### 6) Setup Firestore
 - Firebase Console → Firestore Database → Create Database
-- Use **production/test mode** depending on assignment instructions
+- Use **production/test mode** depending project needs
 
 Collections used:
 - `drivers`
@@ -234,7 +234,7 @@ Firebase Console → Project Settings → Web App Config
 ```
 *.json
 service-account.json
-assignment01-*.json
+project01-*.json
 ```
 
 If already committed, remove it from Git history using:
