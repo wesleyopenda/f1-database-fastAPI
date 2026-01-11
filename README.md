@@ -98,8 +98,8 @@ assignment01/
 ### 1) Clone / Download project
 
 ```bash
-git clone <YOUR_REPO_URL>
-cd assignment01
+git clone <REPO_URL>
+cd <path to project>
 ```
 
 ---
@@ -244,7 +244,6 @@ git status
 git add .
 git commit -m "save work"
 
-# then clean history properly
 ```
 
 ---
