@@ -225,29 +225,6 @@ Firebase Console → Project Settings → Web App Config
 
 ---
 
-## IMPORTANT: Secrets + GitHub Push Protection
-
- **DO NOT commit your service account JSON file**.
-
-### Add to `.gitignore`:
-
-```
-*.json
-service-account.json
-project01-*.json
-```
-
-If already committed, remove it from Git history using:
-
-```bash
-git status
-git add .
-git commit -m "save work"
-
-```
-
----
-
 ## Seed Sample Data
 
 On app startup, `seed_sample_data()` checks if Firestore is empty and inserts:
