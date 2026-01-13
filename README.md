@@ -239,5 +239,3 @@ with valid Cloud Storage image URLs
 
 **Wesley Openda**  
 F1 Database FastAPI Web Application
-
-git
